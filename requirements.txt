@@ -14,3 +14,4 @@ jinja2>=3.1
 # writing. Do not bump this without re-testing password hashing.
 bcrypt==4.0.1
 tzdata>=2024.1
+httpx>=0.27

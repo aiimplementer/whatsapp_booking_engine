@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from app.database import engine
-from app.routers import appointments, auth, public, scheduling, tenants
+from app.routers import appointments, auth, public, scheduling, tenants, whatsapp
 from app import web
 
 app = FastAPI(title="WhatsApp Appointment Booking Engine")
@@ -13,6 +13,7 @@ app.include_router(tenants.router)
 app.include_router(scheduling.router)
 app.include_router(appointments.router)
 app.include_router(public.router)
+app.include_router(whatsapp.router)
 
 # Server-rendered UI (landing page, admin dashboard, public booking page).
 # Pure template shells — they call the JSON API above from the browser.
@@ -31,5 +32,3 @@ async def health_check():
 # - The nightly job that populates `available_slots` as a read cache. It
 #   should call app.services.slots.compute_available_slots() rather than
 #   re-implementing the logic — see that module's docstring.
-# - WhatsApp/n8n webhook integration (own auth: webhook signature
-#   verification, not the JWT flow used above).
