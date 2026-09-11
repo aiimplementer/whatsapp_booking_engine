@@ -535,7 +535,7 @@ async def _handle_await_time(
     chosen_slot_iso = time_slots[overall_idx]
     session.temp_data = {**session.temp_data, "chosen_slot": chosen_slot_iso}
     session.current_step = "AWAIT_NAME"
-    return ["What name should this booking be under?"]
+    return ["Please provide the name under which you would like the booking to be made"]
 
 
 async def _handle_await_name(
