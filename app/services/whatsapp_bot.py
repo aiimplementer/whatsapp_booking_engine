@@ -77,8 +77,8 @@ def _render_main_menu(tenant_name: str) -> dict:
     return {
         "type": "interactive_list",
         "body_text": (
-            f"\U0001f31f *{tenant_name}*\n"
-            "_Your appointment, your way._"
+            f"Welcome to *{tenant_name}*!\n"
+            "Your personal appointment assistant, available anytime."
         ),
         "button_text": "Explore",
         "sections": [
@@ -198,6 +198,24 @@ def text_upper_if_ref(lowered: str) -> str | None:
     return None
 
 
+# Icon + display label per appointment status, for a friendlier lookup reply.
+STATUS_DISPLAY = {
+    "PENDING": ("\u23f3", "Pending"),
+    "CONFIRMED": ("\u2705", "Confirmed"),
+    "CHECKED_IN": ("\U0001f7e2", "Checked In"),
+    "COMPLETED": ("\u2714\ufe0f", "Completed"),
+    "CANCELLED": ("\u274c", "Cancelled"),
+    "RESCHEDULED": ("\U0001f504", "Rescheduled"),
+    "NO_SHOW": ("\U0001f6ab", "No Show"),
+    "EXPIRED": ("\u231b", "Expired"),
+}
+
+
+def _format_status(status: str) -> str:
+    icon, label = STATUS_DISPLAY.get(status, ("", status.title()))
+    return f"{label} {icon}".strip()
+
+
 async def _lookup_booking(
     db: AsyncSession, tenant: Tenant, session: WhatsAppSession, booking_ref: str
 ) -> list[str]:
@@ -217,9 +235,11 @@ async def _lookup_booking(
     tz = ZoneInfo(tenant.timezone)
     local_time = appointment.scheduled_at.astimezone(tz)
     return [
-        f"Booking {appointment.booking_ref}: {appointment.status}\n"
+        f"\U0001f4cb *Booking Details*\n"
+        f"Reference: *{appointment.booking_ref}*\n"
+        f"Status: *{_format_status(appointment.status)}*\n"
         f"Name: {appointment.customer_name}\n"
-        f"{local_time.strftime('%a %d %b, %I:%M %p')}"
+        f"Date & Time: {local_time.strftime('%a, %d %b at %I:%M %p')}"
     ]
 
 
@@ -271,7 +291,7 @@ def _render_service_list(service_names: list[str], service_durations: list[int])
         }
         for i, (name, duration) in enumerate(shown)
     ]
-    body = "Which service would you like?"
+    body = "Great! Which service can we set up for you today?"
     if len(service_names) > MAX_LIST_ROWS:
         body += f" (showing first {MAX_LIST_ROWS})"
     return {
