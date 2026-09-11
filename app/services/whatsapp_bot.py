@@ -275,8 +275,8 @@ async def _cancel_booking(
     tz = ZoneInfo(tenant.timezone)
     local_time = appointment.scheduled_at.astimezone(tz)
     return [
-        f"Cancelled booking {appointment.booking_ref} "
-        f"({local_time.strftime('%a %d %b, %I:%M %p')}).\n\n"
+        f"This is to confirm that booking *{appointment.booking_ref}*, originally "
+        f"scheduled for {local_time.strftime('%a, %d %b at %I:%M %p')}, has been cancelled.\n\n"
         f"Reply *menu* for anything else."
     ]
 
