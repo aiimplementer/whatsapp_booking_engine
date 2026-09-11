@@ -39,7 +39,7 @@ from app.models.whatsapp_session import WhatsAppSession
 from app.services.slots import compute_available_slots
 
 # WhatsApp interactive lists cap out at 10 total rows across all sections.
-MAX_LIST_ROWS = 10
+MAX_LIST_ROWS = 8
 # Row/section title limit enforced by the Cloud API.
 ROW_TITLE_MAX = 24
 
