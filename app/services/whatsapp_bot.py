@@ -78,7 +78,7 @@ def _render_main_menu(tenant_name: str) -> dict:
         "type": "interactive_list",
         "body_text": (
             f"Welcome to *{tenant_name}*!\n"
-            "Your personal appointment assistant, available anytime."
+            "Your personal appointment assistant, available anytime. Please select an option from the menu below to continue."
         ),
         "button_text": "Explore",
         "sections": [
