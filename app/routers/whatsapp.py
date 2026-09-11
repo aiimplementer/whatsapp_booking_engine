@@ -11,16 +11,15 @@ from app.models.tenant import Tenant, TenantUser
 from app.models.whatsapp_session import WhatsAppSession
 from app.schemas.whatsapp import WhatsAppConnectIn, WhatsAppSendIn, WhatsAppStatusOut
 from app.services.whatsapp_bot import handle_incoming_message
-from app.services.whatsapp_client import WhatsAppSendError, send_text_message, verify_signature
+from app.services.whatsapp_client import (
+    WhatsAppSendError,
+    send_text_message,
+    send_interactive_list,
+    verify_signature,
+)
 
 logger = logging.getLogger("app.whatsapp")
 
-# NOTE: this router deliberately does NOT use the JWT-based
-# app.deps.get_tenant_db for the webhook endpoints — Meta isn't a logged-in
-# tenant user, so those two endpoints use their own auth (verify-token for
-# the GET handshake, HMAC signature for every POST) instead. The admin
-# endpoints (/send, /connect, /disconnect) DO use the normal JWT flow, same
-# as every other authenticated endpoint in this app.
 router = APIRouter(prefix="/api/v1/whatsapp", tags=["whatsapp"])
 
 
@@ -51,9 +50,7 @@ async def receive_webhook(request: Request):
 
     payload = await request.json()
 
-    # Always ack with 200 once the signature checks out — Meta retries (and
-    # eventually disables) a webhook that doesn't respond quickly, so any
-    # per-message failure below is logged rather than turned into a non-200.
+    # Always ack with 200 once the signature checks out
     for entry in payload.get("entry", []):
         for change in entry.get("changes", []):
             value = change.get("value", {})
@@ -63,27 +60,45 @@ async def receive_webhook(request: Request):
                     await _process_message(phone_number_id, message)
                 except Exception:
                     logger.exception("Failed to process WhatsApp message: %s", message)
-            # value.get("statuses") (delivered/read receipts) is ignored —
-            # nothing in this app currently needs delivery-status tracking.
 
     return {"status": "received"}
 
 
 async def _process_message(phone_number_id: str | None, message: dict) -> None:
-    if phone_number_id is None or message.get("type") != "text":
-        return  # non-text messages (image, location, etc.) aren't handled yet
+    """Process both text and interactive list messages."""
+    if phone_number_id is None:
+        return
 
     customer_phone = message["from"]  # Meta gives this without a leading '+'
-    text = message.get("text", {}).get("body", "")
+    message_type = message.get("type")
+    
+    # Extract text or list_reply
+    text = None
+    list_reply_id = None
+    
+    if message_type == "text":
+        text = message.get("text", {}).get("body", "")
+    elif message_type == "interactive":
+        interactive = message.get("interactive", {})
+        if interactive.get("type") == "list_reply":
+            list_reply = interactive.get("list_reply", {})
+            list_reply_id = list_reply.get("id")
+    else:
+        # Unsupported message type (image, location, etc.)
+        return
+    
+    # If neither text nor list_reply, can't proceed
+    if not text and not list_reply_id:
+        return
 
-    # Tenant lookup uses a plain, tenant-agnostic session — there is no
-    # tenant context yet at this point, that's precisely what we're resolving.
+    # Tenant lookup
     async for lookup_db in get_db():
         result = await lookup_db.execute(
             select(Tenant).where(Tenant.whatsapp_number == phone_number_id)
         )
         tenant = result.scalar_one_or_none()
         break
+    
     if tenant is None:
         logger.warning("No tenant connected for phone_number_id=%s", phone_number_id)
         return
@@ -100,19 +115,36 @@ async def _process_message(phone_number_id: str | None, message: dict) -> None:
             session = WhatsAppSession(tenant_id=tenant.id, customer_phone=customer_phone)
             db.add(session)
 
-        replies = await handle_incoming_message(db, tenant, session, text)
+        # Pass both text and list_reply_id to bot
+        replies = await handle_incoming_message(db, tenant, session, text or "", list_reply_id)
         await db.commit()
         break
 
+    # Send all replies (text or interactive)
     for reply in replies:
         try:
-            await send_text_message(phone_number_id=phone_number_id, to=customer_phone, body=reply)
+            if isinstance(reply, dict) and reply.get("type") == "interactive_list":
+                # Send interactive list message
+                await send_interactive_list(
+                    phone_number_id=phone_number_id,
+                    to=customer_phone,
+                    body_text=reply["body_text"],
+                    button_text=reply["button_text"],
+                    sections=reply["sections"],
+                )
+            else:
+                # Send text message
+                await send_text_message(
+                    phone_number_id=phone_number_id,
+                    to=customer_phone,
+                    body=reply,
+                )
         except WhatsAppSendError:
             logger.exception("Failed to send WhatsApp reply to %s", customer_phone)
 
 
 # ---------------------------------------------------------------------------
-# Admin endpoints (normal JWT auth, tenant-scoped like the rest of the app)
+# Admin endpoints (normal JWT auth, tenant-scoped)
 # ---------------------------------------------------------------------------
 
 @router.post("/connect", response_model=WhatsAppStatusOut)

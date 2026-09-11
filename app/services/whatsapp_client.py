@@ -7,6 +7,8 @@ WhatsApp sender number under your Meta App) — NOT the human-readable phone
 number. Incoming webhook payloads carry this same phone_number_id in
 `metadata.phone_number_id`, so it's what we match on to find the right
 tenant, and it's also what we send FROM.
+
+Supports both plain-text messages and interactive list messages.
 """
 
 import hashlib
@@ -59,9 +61,57 @@ async def send_text_message(*, phone_number_id: str, to: str, body: str) -> dict
     async with httpx.AsyncClient(timeout=15) as client:
         resp = await client.post(url, json=payload, headers=headers)
     if resp.status_code >= 400:
-        # Surface Meta's error body (invalid token, unregistered number,
-        # 24h-session-window closed, etc.) rather than a bare status code —
-        # this is almost always what you need to see to fix a send failure.
+        raise WhatsAppSendError(resp.status_code, resp.text)
+    return resp.json()
+
+
+async def send_interactive_list(
+    *,
+    phone_number_id: str,
+    to: str,
+    body_text: str,
+    button_text: str,
+    sections: list[dict],
+) -> dict:
+    """Send an interactive list message via the Cloud API.
+    
+    Args:
+        phone_number_id: Meta phone number ID
+        to: Recipient phone number (intl format, no +)
+        body_text: Main message text shown at top
+        button_text: Text on the button that opens the list
+        sections: List of sections, each with 'title' and 'rows'
+                 Each row: {"id": "unique_id", "title": "Display text", "description": "Optional"}
+    
+    Example:
+        sections = [
+            {
+                "title": "Dates",
+                "rows": [
+                    {"id": "date_0", "title": "Wed, 11-Sep-26"},
+                    {"id": "date_1", "title": "Thu, 12-Sep-26"},
+                ]
+            }
+        ]
+    """
+    url = f"{GRAPH_BASE}/{settings.whatsapp_api_version}/{phone_number_id}/messages"
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": to,
+        "type": "interactive",
+        "interactive": {
+            "type": "list",
+            "body": {"text": body_text},
+            "action": {
+                "button": button_text,
+                "sections": sections,
+            },
+        },
+    }
+    headers = {"Authorization": f"Bearer {settings.whatsapp_access_token}"}
+    async with httpx.AsyncClient(timeout=15) as client:
+        resp = await client.post(url, json=payload, headers=headers)
+    if resp.status_code >= 400:
         raise WhatsAppSendError(resp.status_code, resp.text)
     return resp.json()
 
