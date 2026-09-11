@@ -451,21 +451,35 @@ async def _handle_await_date(
         **temp_data,
         "selected_date": selected_date.isoformat(),
         "time_slots": [s.isoformat() for s in selected_slots],
+        "time_page": 0,
     }
 
-    return [_render_time_list(selected_date, selected_slots)]
+    return [_render_time_list(selected_date, selected_slots, time_page=0)]
 
 
-def _render_time_list(selected_date, selected_slots: list) -> dict:
-    shown = selected_slots[:MAX_LIST_ROWS]
+def _render_time_list(selected_date, selected_slots: list, time_page: int = 0) -> dict:
+    """Render a paginated time list with navigation rows."""
+    start_idx = time_page * MAX_LIST_ROWS
+    end_idx = start_idx + MAX_LIST_ROWS
+    page_slots = selected_slots[start_idx:end_idx]
+    
     rows = [
         {"id": f"time_{i}", "title": slot_dt.strftime("%I:%M %p").lstrip("0")}
-        for i, slot_dt in enumerate(shown)
+        for i, slot_dt in enumerate(page_slots)
     ]
+    
+    # Add pagination controls
+    has_prev = time_page > 0
+    has_next = end_idx < len(selected_slots)
+    
+    if has_prev:
+        rows.append({"id": "time_prev", "title": "\u25c0 Previous times"})
+    if has_next:
+        rows.append({"id": "time_next", "title": "More times \u25b6"})
+    
     date_display = selected_date.strftime("%a, %d-%b-%y")
     body = f"What time on {date_display}?"
-    if len(selected_slots) > MAX_LIST_ROWS:
-        body += f" (showing first {MAX_LIST_ROWS})"
+    
     return {
         "type": "interactive_list",
         "body_text": body,
@@ -477,18 +491,48 @@ def _render_time_list(selected_date, selected_slots: list) -> dict:
 async def _handle_await_time(
     db: AsyncSession, tenant: Tenant, session: WhatsAppSession, text: str, list_reply_id: str | None
 ) -> list:
-    time_slots = session.temp_data.get("time_slots", [])
+    text = text.strip()
+    temp_data = session.temp_data
+    time_slots = temp_data.get("time_slots", [])
+    time_page = temp_data.get("time_page", 0)
+    
+    selected_date_iso = temp_data.get("selected_date")
+    selected_date = datetime.fromisoformat(selected_date_iso).date() if selected_date_iso else None
+    selected_slots = [datetime.fromisoformat(s) for s in time_slots]
+    
+    start_idx = time_page * MAX_LIST_ROWS
+    end_idx = start_idx + MAX_LIST_ROWS
+    page_slots = selected_slots[start_idx:end_idx]
+    
+    # Pagination: handle previous/next navigation
+    went_prev = list_reply_id == "time_prev" or (list_reply_id is None and text == "0")
+    went_next = list_reply_id == "time_next" or (
+        list_reply_id is None and text == str(len(page_slots) + 1)
+    )
+    
+    if went_prev:
+        if time_page > 0:
+            session.temp_data = {**temp_data, "time_page": time_page - 1}
+            return [_render_time_list(selected_date, selected_slots, time_page=time_page - 1)]
+        return ["You're already viewing the first set of times. Please select a time."]
+    
+    if went_next:
+        if end_idx < len(selected_slots):
+            session.temp_data = {**temp_data, "time_page": time_page + 1}
+            return [_render_time_list(selected_date, selected_slots, time_page=time_page + 1)]
+        return ["No more times available."]
+    
+    # Handle regular time selection
     idx = _choice_index(text, list_reply_id, "time_")
-    if idx is None or not (0 <= idx < len(time_slots)):
-        selected_date_iso = session.temp_data.get("selected_date")
+    if idx is None or not (0 <= idx < len(page_slots)):
         retry: list = ["Please select a time from the list."]
-        if selected_date_iso:
-            selected_date = datetime.fromisoformat(selected_date_iso).date()
-            selected_slots = [datetime.fromisoformat(s) for s in time_slots]
-            retry.append(_render_time_list(selected_date, selected_slots))
+        if selected_date:
+            retry.append(_render_time_list(selected_date, selected_slots, time_page=time_page))
         return retry
 
-    chosen_slot_iso = time_slots[idx]
+    # Convert page slot index to overall slot index
+    overall_idx = start_idx + idx
+    chosen_slot_iso = time_slots[overall_idx]
     session.temp_data = {**session.temp_data, "chosen_slot": chosen_slot_iso}
     session.current_step = "AWAIT_NAME"
     return ["What name should this booking be under?"]
