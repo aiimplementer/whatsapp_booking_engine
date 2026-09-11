@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Slotbook — booking, kept like a ledger{% endblock %}
+{% block content %}
+<div class="container">
+  <section class="hero">
+    <h1>Appointments booked over WhatsApp, kept like a proper ledger.</h1>
+    <p class="sub">
+      Slotbook gives your business a booking link and a WhatsApp number.
+      Customers pick a time, you see it land on the page instantly — no
+      double-bookings, no back-and-forth.
+    </p>
+    <div class="cta-row">
+      <a class="btn" href="/admin/signup">Set up your business</a>
+      <a class="btn btn-secondary" href="/admin/login">I already have an account</a>
+    </div>
+  </section>
+
+  <section class="feature-grid">
+    <div class="feature">
+      <span class="num">01</span>
+      <h3>One shared calendar</h3>
+      <p class="muted">Working hours, holidays, and one-off blocks all feed the same
+      slot list — WhatsApp and the web page never disagree.</p>
+    </div>
+    <div class="feature">
+      <span class="num">02</span>
+      <h3>No overlaps, guaranteed</h3>
+      <p class="muted">Double-bookings are rejected at the database, not just the
+      form — even if two customers tap the same slot at once.</p>
+    </div>
+    <div class="feature">
+      <span class="num">03</span>
+      <h3>A desk view for staff</h3>
+      <p class="muted">Confirm, check in, and close out appointments from a plain
+      list sorted by time — built for a busy front desk, not a spreadsheet.</p>
+    </div>
+  </section>
+
+  <section class="panel narrow" style="margin: 0 auto 3rem;">
+    <h3>Try the customer booking page</h3>
+    <p class="muted" style="margin-bottom: 1rem;">Have a business slug already?
+    Jump straight to its public booking page.</p>
+    <form id="try-form" class="row" onsubmit="event.preventDefault(); go();">
+      <input type="text" id="slug-input" placeholder="business-slug" style="flex:1; min-width: 180px;" />
+      <button class="btn" type="submit">Open booking page</button>
+    </form>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  function go() {
+    const v = document.getElementById('slug-input').value.trim();
+    if (v) window.location.href = `/book/${encodeURIComponent(v)}`;
+  }
+</script>
+{% endblock %}

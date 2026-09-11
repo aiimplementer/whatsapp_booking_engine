@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Slotbook{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/app.css" />
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block bodyclass %}{% endblock %}">
+  <header class="masthead">
+    <div class="masthead-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark"></span>
+        Slotbook
+      </a>
+      {% block nav %}
+      <nav>
+        <a href="/admin/login">Business login</a>
+        <a class="btn btn-small" href="/admin/signup">Get started</a>
+      </nav>
+      {% endblock %}
+    </div>
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <div id="toast-stack"></div>
+  <script src="/static/js/api.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

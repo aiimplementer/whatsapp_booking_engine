@@ -1,0 +1,51 @@
+{% extends "admin/_shell.html" %}
+{% block title %}Staff — Slotbook{% endblock %}
+{% block admin_content %}
+<div class="page-head">
+  <div>
+    <h1>Staff</h1>
+    <p class="lede">Who can log in to this desk, and what they're allowed to do.</p>
+  </div>
+  <button class="btn" id="new-staff-btn">Invite staff</button>
+</div>
+
+<div class="panel" id="new-staff-panel" hidden>
+  <h3>Invite staff</h3>
+  <div id="staff-banner" class="banner banner-error" hidden></div>
+  <form id="staff-form">
+    <div class="field-row">
+      <div class="field">
+        <label for="staff-email">Email</label>
+        <input type="email" id="staff-email" required />
+      </div>
+      <div class="field">
+        <label for="staff-role">Role</label>
+        <select id="staff-role">
+          <option value="staff">Staff — manage appointments</option>
+          <option value="admin">Admin — full access</option>
+          <option value="viewer">Viewer — read only</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="staff-password">Temporary password</label>
+      <input type="password" id="staff-password" required minlength="8" />
+    </div>
+    <div class="row">
+      <button class="btn" type="submit" id="staff-submit">Add staff member</button>
+      <button class="btn btn-secondary" type="button" id="staff-cancel">Cancel</button>
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <div id="staff-skeleton" class="skeleton">Loading staff…</div>
+  <table class="sheet hidden" id="staff-table">
+    <thead><tr><th>Email</th><th>Role</th><th>Added</th><th></th></tr></thead>
+    <tbody id="staff-tbody"></tbody>
+  </table>
+</div>
+{% endblock %}
+{% block admin_scripts %}
+<script src="/static/js/admin_staff.js"></script>
+{% endblock %}

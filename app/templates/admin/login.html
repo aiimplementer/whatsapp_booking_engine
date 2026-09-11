@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Log in — Slotbook{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="auth-wrap">
+    <h1 class="center">Log in</h1>
+    <p class="muted center" style="margin: 0 auto 1.5rem;">You'll need your
+    business slug as well as your email and password.</p>
+    <div class="panel">
+      <div id="banner" class="banner banner-error" hidden></div>
+      <form id="login-form">
+        <div class="field">
+          <label for="tenant_slug">Business slug</label>
+          <input type="text" id="tenant_slug" required placeholder="nimbus-hair" />
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" required placeholder="owner@nimbus.example" />
+        </div>
+        <div class="field" style="margin-bottom: 0;">
+          <label for="password">Password</label>
+          <input type="password" id="password" required placeholder="••••••••" />
+        </div>
+        <div style="height: 1rem;"></div>
+        <button class="btn btn-block" type="submit" id="submit-btn">Log in</button>
+      </form>
+    </div>
+    <p class="auth-switch">New here? <a href="/admin/signup">Set up your business</a></p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const banner = document.getElementById('banner');
+  showBanner(banner, null);
+  const btn = document.getElementById('submit-btn');
+  const tenant_slug = document.getElementById('tenant_slug').value.trim();
+  const body = {
+    tenant_slug,
+    email: document.getElementById('email').value.trim(),
+    password: document.getElementById('password').value,
+  };
+  btn.disabled = true;
+  btn.textContent = 'Logging in…';
+  try {
+    const data = await Api.post('/api/v1/auth/login', body);
+    Api.setSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      tenant_slug,
+    });
+    const me = await Api.get('/api/v1/auth/me');
+    const tenant = await Api.get('/api/v1/tenants/me');
+    Api.setSession({ role: me.role, tenant_name: tenant.name });
+    window.location.href = '/admin';
+  } catch (err) {
+    showBanner(banner, err.detail || err.message);
+    btn.disabled = false;
+    btn.textContent = 'Log in';
+  }
+});
+</script>
+{% endblock %}

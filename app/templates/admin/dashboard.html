@@ -1,0 +1,94 @@
+{% extends "admin/_shell.html" %}
+{% block title %}Appointments — Slotbook{% endblock %}
+{% block admin_content %}
+<div class="page-head">
+  <div>
+    <h1>Appointments</h1>
+    <p class="lede">Everything booked through your link or entered by hand, in order.</p>
+  </div>
+  <button class="btn" id="new-appt-btn">New appointment</button>
+</div>
+
+<div class="panel" id="new-appt-panel" hidden>
+  <h3>New appointment</h3>
+  <div id="new-appt-banner" class="banner banner-error" hidden></div>
+  <form id="new-appt-form">
+    <div class="field-row">
+      <div class="field">
+        <label for="na-name">Customer name</label>
+        <input type="text" id="na-name" required maxlength="150" />
+      </div>
+      <div class="field">
+        <label for="na-phone">Phone</label>
+        <input type="tel" id="na-phone" required placeholder="+919876543210" />
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="na-service">Service (optional)</label>
+        <select id="na-service"><option value="">— none —</option></select>
+      </div>
+      <div class="field">
+        <label for="na-duration">Duration (minutes)</label>
+        <input type="number" id="na-duration" min="1" value="20" required />
+      </div>
+    </div>
+    <div class="field">
+      <label for="na-when">Date &amp; time</label>
+      <input type="datetime-local" id="na-when" required />
+    </div>
+    <div class="field">
+      <label for="na-notes">Notes (optional)</label>
+      <textarea id="na-notes" rows="2"></textarea>
+    </div>
+    <div class="row">
+      <button class="btn" type="submit" id="na-submit">Save appointment</button>
+      <button class="btn btn-secondary" type="button" id="na-cancel">Cancel</button>
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <form id="filter-form" class="row" style="margin-bottom: 0;">
+    <div class="field" style="margin:0; min-width: 160px;">
+      <label for="f-status">Status</label>
+      <select id="f-status">
+        <option value="">All</option>
+        <option value="PENDING">Pending</option>
+        <option value="CONFIRMED">Confirmed</option>
+        <option value="CHECKED_IN">Checked in</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="CANCELLED">Cancelled</option>
+        <option value="RESCHEDULED">Rescheduled</option>
+        <option value="NO_SHOW">No-show</option>
+        <option value="EXPIRED">Expired</option>
+      </select>
+    </div>
+    <div class="field" style="margin:0;">
+      <label for="f-phone">Customer phone</label>
+      <input type="tel" id="f-phone" placeholder="+91…" />
+    </div>
+    <div class="field" style="margin:0;">
+      <label for="f-from">From</label>
+      <input type="date" id="f-from" />
+    </div>
+    <div class="field" style="margin:0;">
+      <label for="f-to">To</label>
+      <input type="date" id="f-to" />
+    </div>
+    <button class="btn btn-secondary" type="submit" style="align-self: flex-end;">Filter</button>
+  </form>
+</div>
+
+<div class="panel" style="padding: 0.5rem 1.4rem 1rem;">
+  <div id="list-skeleton" class="skeleton">Loading appointments…</div>
+  <div id="ledger" class="ledger" hidden></div>
+  <div id="empty" class="empty-state" hidden>
+    <h3>No appointments here yet</h3>
+    <p>Once customers book through your link, or you add one by hand, it shows up here.</p>
+  </div>
+</div>
+{% endblock %}
+{% block admin_scripts %}
+<script src="/static/js/admin_dashboard.js"></script>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block nav %}
+<nav>
+  <a href="#" id="nav-booking-link">Booking page</a>
+  <a href="#" id="nav-logout">Log out</a>
+</nav>
+{% endblock %}
+{% block bodyclass %}no-ruling{% endblock %}
+{% block content %}
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <span class="tenant-name" id="sidebar-tenant-name">&nbsp;</span>
+    <span class="tenant-slug" id="sidebar-tenant-slug">&nbsp;</span>
+    <ul class="side-nav">
+      <li><a href="/admin" data-nav="dashboard">Appointments</a></li>
+      <li><a href="/admin/services" data-nav="services">Services</a></li>
+      <li><a href="/admin/scheduling" data-nav="scheduling">Scheduling</a></li>
+      <li><a href="/admin/staff" data-nav="staff">Staff</a></li>
+      <li><a href="/admin/settings" data-nav="settings">Business settings</a></li>
+    </ul>
+  </aside>
+  <div class="app-main">
+    {% block admin_content %}{% endblock %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  if (!Api.requireAuth()) { /* redirected */ }
+  document.getElementById('sidebar-tenant-name').textContent = Api.getTenantName() || 'Your business';
+  document.getElementById('sidebar-tenant-slug').textContent = Api.getTenantSlug() ? '/' + Api.getTenantSlug() : '';
+  const bookingLink = document.getElementById('nav-booking-link');
+  if (bookingLink && Api.getTenantSlug()) {
+    bookingLink.href = `/book/${Api.getTenantSlug()}`;
+    bookingLink.target = '_blank';
+  }
+  document.getElementById('nav-logout').addEventListener('click', (e) => {
+    e.preventDefault();
+    Api.clearSession();
+    window.location.href = '/admin/login';
+  });
+  document.querySelectorAll('.side-nav a').forEach((a) => {
+    if (a.getAttribute('data-nav') === '{{ active_nav }}') a.classList.add('active');
+  });
+</script>
+{% block admin_scripts %}{% endblock %}
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends "admin/_shell.html" %}
+{% block title %}Scheduling — Slotbook{% endblock %}
+{% block admin_content %}
+<div class="page-head">
+  <div>
+    <h1>Scheduling</h1>
+    <p class="lede">Working hours, holidays, and one-off blocks — this is what turns into bookable slots.</p>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Working hours</h2>
+  <p class="muted" style="margin-top:-0.5rem;">Set a schedule per service, or one tenant-wide default used by services without their own.</p>
+  <div id="cfg-banner" class="banner banner-error" hidden></div>
+  <form id="cfg-form">
+    <div class="field">
+      <label for="cfg-service">Applies to</label>
+      <select id="cfg-service">
+        <option value="">Tenant-wide default</option>
+      </select>
+    </div>
+
+    <fieldset>
+      <legend>Working days</legend>
+      <div class="row" id="cfg-days"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Time windows</legend>
+      <div id="cfg-windows" class="stack"></div>
+      <button class="btn btn-secondary btn-small" type="button" id="cfg-add-window">Add window</button>
+    </fieldset>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="cfg-duration">Slot length (minutes)</label>
+        <input type="number" id="cfg-duration" min="1" value="20" required />
+      </div>
+      <div class="field">
+        <label for="cfg-buffer">Buffer between slots (minutes)</label>
+        <input type="number" id="cfg-buffer" min="0" value="0" required />
+      </div>
+      <div class="field">
+        <label for="cfg-advance">Bookable up to (days ahead)</label>
+        <input type="number" id="cfg-advance" min="1" value="30" required />
+      </div>
+    </div>
+
+    <button class="btn" type="submit" id="cfg-submit">Save schedule</button>
+  </form>
+</div>
+
+<div class="panel">
+  <h3>Existing schedules</h3>
+  <div id="cfg-skeleton" class="skeleton">Loading…</div>
+  <table class="sheet hidden" id="cfg-table">
+    <thead><tr><th>Applies to</th><th>Working days</th><th>Slot / buffer</th><th>Advance</th><th></th></tr></thead>
+    <tbody id="cfg-tbody"></tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <div class="spread">
+    <h2>Holidays</h2>
+  </div>
+  <form id="holiday-form" class="row">
+    <div class="field" style="margin:0;">
+      <label for="hol-date">Date</label>
+      <input type="date" id="hol-date" required />
+    </div>
+    <div class="field" style="margin:0; flex:1;">
+      <label for="hol-reason">Reason (optional)</label>
+      <input type="text" id="hol-reason" maxlength="255" />
+    </div>
+    <button class="btn" type="submit" style="align-self:flex-end;">Add holiday</button>
+  </form>
+  <div id="hol-list" class="stack" style="margin-top:1rem;"></div>
+</div>
+
+<div class="panel">
+  <h2>Blocked times</h2>
+  <p class="muted" style="margin-top:-0.5rem;">One-off closures — a staff break, an emergency, anything shorter than a full holiday.</p>
+  <form id="blocked-form" class="field-row">
+    <div class="field">
+      <label for="blk-start">Starts</label>
+      <input type="datetime-local" id="blk-start" required />
+    </div>
+    <div class="field">
+      <label for="blk-end">Ends</label>
+      <input type="datetime-local" id="blk-end" required />
+    </div>
+    <div class="field">
+      <label for="blk-reason">Reason (optional)</label>
+      <input type="text" id="blk-reason" maxlength="255" />
+    </div>
+    <div class="field" style="align-self: flex-end; flex: 0;">
+      <button class="btn" type="submit">Add block</button>
+    </div>
+  </form>
+  <div id="blk-list" class="stack" style="margin-top:1rem;"></div>
+</div>
+
+<div class="panel">
+  <h2>Daily blocked times</h2>
+  <p class="muted" style="margin-top:-0.5rem;">Recurring blocks that repeat every day (or on the days you pick) — lunch breaks, standups, and the like. No date needed — it just runs every day going forward until you remove or pause it.</p>
+  <div id="rec-banner" class="banner banner-error" hidden></div>
+  <form id="rec-form">
+    <div class="field-row">
+      <div class="field">
+        <label for="rec-start">Starts</label>
+        <input type="time" id="rec-start" required />
+      </div>
+      <div class="field">
+        <label for="rec-end">Ends</label>
+        <input type="time" id="rec-end" required />
+      </div>
+      <div class="field" style="flex:1;">
+        <label for="rec-reason">Reason (optional)</label>
+        <input type="text" id="rec-reason" maxlength="255" placeholder="e.g. Lunch break" />
+      </div>
+    </div>
+
+    <fieldset>
+      <legend>Repeats on</legend>
+      <div class="row" id="rec-days"></div>
+    </fieldset>
+
+    <button class="btn btn-secondary btn-small" type="button" id="rec-toggle-range">+ Only for a date range (optional)</button>
+    <div class="field-row" id="rec-range" hidden>
+      <div class="field">
+        <label for="rec-start-date">From</label>
+        <input type="date" id="rec-start-date" />
+      </div>
+      <div class="field">
+        <label for="rec-end-date">Until</label>
+        <input type="date" id="rec-end-date" />
+      </div>
+    </div>
+
+    <input type="hidden" id="rec-edit-id" value="" />
+    <div class="field-row" style="margin-top:0.75rem;">
+      <button class="btn" type="submit" id="rec-submit">Add daily block</button>
+      <button class="btn btn-secondary" type="button" id="rec-cancel-edit" hidden>Cancel edit</button>
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <h3>Existing daily blocks</h3>
+  <div id="rec-skeleton" class="skeleton">Loading…</div>
+  <table class="sheet hidden" id="rec-table">
+    <thead><tr><th>Time</th><th>Repeats</th><th>Reason</th><th>Status</th><th></th></tr></thead>
+    <tbody id="rec-tbody"></tbody>
+  </table>
+</div>
+{% endblock %}
+{% block admin_scripts %}
+<script src="/static/js/admin_scheduling.js"></script>
+{% endblock %}

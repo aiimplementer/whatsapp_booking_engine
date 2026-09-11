@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Book an appointment{% endblock %}
+{% block nav %}
+<nav><a href="/">Slotbook</a></nav>
+{% endblock %}
+{% block content %}
+<div class="booking-wrap" data-slug="{{ tenant_slug }}">
+  <div id="load-error" class="banner banner-error hidden container" style="max-width:640px; margin: 2rem auto;"></div>
+
+  <div id="booking-app" class="hidden">
+    <div class="booking-header">
+      <h1 class="biz-name" id="biz-name">&nbsp;</h1>
+      <p class="muted" id="biz-sub">Pick a service and a time that works for you.</p>
+    </div>
+
+    <div id="step-service">
+      <h3>1. Choose a service</h3>
+      <div class="service-list" id="service-list"></div>
+    </div>
+
+    <div id="step-slots" class="hidden">
+      <h3>2. Choose a time</h3>
+      <div class="day-tabs" id="day-tabs"></div>
+      <div class="slot-grid" id="slot-grid"></div>
+      <div id="no-slots" class="muted hidden">No times available on this day — try another.</div>
+    </div>
+
+    <div id="step-details" class="hidden panel">
+      <h3>3. Your details</h3>
+      <div id="booking-banner" class="banner banner-error" hidden></div>
+      <p class="muted" id="chosen-slot-summary"></p>
+      <form id="booking-form">
+        <div class="field-row">
+          <div class="field">
+            <label for="b-name">Full name</label>
+            <input type="text" id="b-name" required maxlength="150" />
+          </div>
+          <div class="field">
+            <label for="b-phone">Phone</label>
+            <input type="tel" id="b-phone" required placeholder="+919876543210" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="b-email">Email (optional)</label>
+          <input type="email" id="b-email" />
+        </div>
+        <div class="field">
+          <label for="b-notes">Notes (optional)</label>
+          <textarea id="b-notes" rows="2"></textarea>
+        </div>
+        <button class="btn btn-block" type="submit" id="b-submit">Confirm booking</button>
+      </form>
+    </div>
+
+    <div id="step-confirmation" class="hidden confirmation-card">
+      <h3>You're booked</h3>
+      <div class="ref" id="conf-ref"></div>
+      <p id="conf-when"></p>
+      <p class="muted">Keep your reference and phone number — you'll need both to look up or cancel this booking.</p>
+    </div>
+  </div>
+
+  <hr style="border: none; border-top: 1px solid var(--rule); margin: 3rem 0 2rem;" />
+
+  <div class="panel">
+    <h3>Already booked? Look up or cancel</h3>
+    <form id="lookup-form" class="field-row">
+      <div class="field">
+        <label for="l-ref">Booking reference</label>
+        <input type="text" id="l-ref" placeholder="APT-XXXXXXXX" required />
+      </div>
+      <div class="field">
+        <label for="l-phone">Phone used to book</label>
+        <input type="tel" id="l-phone" required placeholder="+919876543210" />
+      </div>
+      <div class="field" style="align-self:flex-end; flex:0;">
+        <button class="btn btn-secondary" type="submit">Look up</button>
+      </div>
+    </form>
+    <div id="lookup-result" style="margin-top: 1rem;"></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/public_book.js"></script>
+{% endblock %}

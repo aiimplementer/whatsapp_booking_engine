@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Set up your business — Slotbook{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="auth-wrap">
+    <h1 class="center">Set up your business</h1>
+    <p class="muted center" style="margin: 0 auto 1.5rem;">Creates your business
+    and your admin login in one step.</p>
+    <div class="panel">
+      <div id="banner" class="banner banner-error" hidden></div>
+      <form id="signup-form">
+        <div class="field">
+          <label for="business_name">Business name</label>
+          <input type="text" id="business_name" required maxlength="255" placeholder="Nimbus Hair Studio" />
+        </div>
+        <div class="field">
+          <label for="tenant_slug">Booking link slug</label>
+          <input type="text" id="tenant_slug" required pattern="[a-z0-9-]+" placeholder="nimbus-hair" />
+          <div class="field-hint">Lowercase letters, numbers, hyphens. This becomes <span class="mono">/book/your-slug</span>.</div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="business_email">Business email</label>
+            <input type="email" id="business_email" required placeholder="hello@nimbus.example" />
+          </div>
+          <div class="field">
+            <label for="business_phone">Business phone</label>
+            <input type="tel" id="business_phone" required placeholder="+919876543210" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="business_timezone">Timezone</label>
+          <select id="business_timezone" required></select>
+          <div class="field-hint">Used to work out your booking hours and slot times. We've guessed based on your browser — change it if that's wrong.</div>
+        </div>
+        <fieldset>
+          <legend>Your admin login</legend>
+          <div class="field">
+            <label for="admin_email">Email</label>
+            <input type="email" id="admin_email" required placeholder="owner@nimbus.example" />
+          </div>
+          <div class="field" style="margin-bottom: 0;">
+            <label for="admin_password">Password</label>
+            <input type="password" id="admin_password" required minlength="8" placeholder="At least 8 characters" />
+          </div>
+        </fieldset>
+        <button class="btn btn-block" type="submit" id="submit-btn">Create business</button>
+      </form>
+    </div>
+    <p class="auth-switch">Already set up? <a href="/admin/login">Log in</a></p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/timezones.js"></script>
+<script>
+// Pre-select the browser's own timezone so most people never need to touch
+// the dropdown; they can still override it if it's wrong (e.g. a shared
+// device, or staff signing up on behalf of the business).
+let guessedTimezone = 'Asia/Kolkata';
+try {
+  guessedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || guessedTimezone;
+} catch { /* fall back to default above */ }
+populateTimezoneSelect(document.getElementById('business_timezone'), null, guessedTimezone);
+
+document.getElementById('signup-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const banner = document.getElementById('banner');
+  showBanner(banner, null);
+  const btn = document.getElementById('submit-btn');
+  const body = {
+    business_name: document.getElementById('business_name').value.trim(),
+    tenant_slug: document.getElementById('tenant_slug').value.trim(),
+    business_email: document.getElementById('business_email').value.trim(),
+    business_phone: document.getElementById('business_phone').value.trim(),
+    admin_email: document.getElementById('admin_email').value.trim(),
+    admin_password: document.getElementById('admin_password').value,
+    timezone: document.getElementById('business_timezone').value,
+  };
+  btn.disabled = true;
+  btn.textContent = 'Creating…';
+  try {
+    const data = await Api.post('/api/v1/auth/signup', body);
+    Api.setSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      tenant_slug: body.tenant_slug,
+      tenant_name: body.business_name,
+      role: 'admin',
+    });
+    window.location.href = '/admin';
+  } catch (err) {
+    showBanner(banner, err.detail || err.message);
+    btn.disabled = false;
+    btn.textContent = 'Create business';
+  }
+});
+</script>
+{% endblock %}

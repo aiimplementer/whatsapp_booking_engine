@@ -1,0 +1,61 @@
+{% extends "admin/_shell.html" %}
+{% block title %}Services — Slotbook{% endblock %}
+{% block admin_content %}
+<div class="page-head">
+  <div>
+    <h1>Services</h1>
+    <p class="lede">What customers can book. Each can carry its own duration and schedule.</p>
+  </div>
+  <button class="btn" id="new-svc-btn">Add service</button>
+</div>
+
+<div class="panel" id="new-svc-panel" hidden>
+  <h3 id="svc-form-title">Add service</h3>
+  <div id="svc-banner" class="banner banner-error" hidden></div>
+  <form id="svc-form">
+    <input type="hidden" id="svc-id" />
+    <div class="field-row">
+      <div class="field">
+        <label for="svc-name">Name</label>
+        <input type="text" id="svc-name" required maxlength="150" />
+      </div>
+      <div class="field">
+        <label for="svc-duration">Duration (minutes)</label>
+        <input type="number" id="svc-duration" min="1" required />
+      </div>
+    </div>
+    <div class="field">
+      <label for="svc-desc">Description (optional)</label>
+      <textarea id="svc-desc" rows="2"></textarea>
+    </div>
+    <div class="row">
+      <button class="btn" type="submit" id="svc-submit">Save service</button>
+      <button class="btn btn-secondary" type="button" id="svc-cancel">Cancel</button>
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <label class="row" style="font-weight: 400;">
+    <input type="checkbox" id="include-inactive" style="width:auto;" />
+    Show inactive services
+  </label>
+</div>
+
+<div class="panel">
+  <div id="skeleton" class="skeleton">Loading services…</div>
+  <table class="sheet hidden" id="svc-table">
+    <thead>
+      <tr><th>Name</th><th>Duration</th><th>Description</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody id="svc-tbody"></tbody>
+  </table>
+  <div class="empty-state hidden" id="empty">
+    <h3>No services yet</h3>
+    <p>Add your first service so customers have something to pick when booking.</p>
+  </div>
+</div>
+{% endblock %}
+{% block admin_scripts %}
+<script src="/static/js/admin_services.js"></script>
+{% endblock %}

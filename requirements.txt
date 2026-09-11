@@ -1,0 +1,16 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+sqlalchemy[asyncio]>=2.0
+asyncpg>=0.29
+alembic>=1.13
+pydantic-settings>=2.4
+python-dotenv>=1.0
+pyjwt>=2.9
+passlib[bcrypt]>=1.7
+email-validator>=2.2
+jinja2>=3.1
+# Pinned: passlib 1.7.4 (its last release) mis-detects bcrypt>=4.1's version
+# string and throws on hash/verify. Known upstream issue, not fixed as of
+# writing. Do not bump this without re-testing password hashing.
+bcrypt==4.0.1
+tzdata>=2024.1
