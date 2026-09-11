@@ -88,6 +88,11 @@ def _render_main_menu() -> dict:
                         "title": "Check a booking",
                         "description": "Look up by reference number",
                     },
+                    {
+                        "id": "menu_cancel",
+                        "title": "Cancel a booking",
+                        "description": "Cancel by reference number",
+                    },
                 ],
             }
         ],
@@ -138,9 +143,10 @@ async def _handle_main_menu(
     chose_check = (
         list_reply_id == "menu_check"
         or lowered == "2"
-        or "check" in lowered
-        or lowered.startswith("apt-")
+        or (list_reply_id is None and lowered.startswith("apt-"))
+        or (list_reply_id is None and "cancel" not in lowered and "check" in lowered)
     )
+    chose_cancel = list_reply_id == "menu_cancel" or lowered == "3" or "cancel" in lowered
 
     if chose_book:
         result = await db.execute(
@@ -162,12 +168,20 @@ async def _handle_main_menu(
         }
         return [_render_service_list(service_names, service_durations)]
 
-    if chose_check:
+    if chose_check or chose_cancel:
         # List taps never carry a booking reference — only a typed message can.
         booking_ref = text_upper_if_ref(lowered) if list_reply_id is None else None
         if not booking_ref:
             session.current_step = "MAIN_MENU"
-            return ["Please send your booking reference, e.g. APT-A1B2C3D4."]
+            session.temp_data = {"pending_ref_action": "cancel" if chose_cancel else "check"}
+            verb = "cancel" if chose_cancel else "look up"
+            return [f"Please send the booking reference you'd like to {verb}, e.g. APT-A1B2C3D4."]
+        # A typed reference on its own (no menu tap first) defaults to a
+        # lookup unless a pending "cancel" request is waiting on this ref.
+        action = session.temp_data.get("pending_ref_action") or ("cancel" if chose_cancel else "check")
+        session.temp_data = {}
+        if action == "cancel":
+            return await _cancel_booking(db, tenant, session, booking_ref)
         return await _lookup_booking(db, tenant, session, booking_ref)
 
     return [_render_main_menu()]
@@ -199,6 +213,41 @@ async def _lookup_booking(
         f"Booking {appointment.booking_ref}: {appointment.status}\n"
         f"Name: {appointment.customer_name}\n"
         f"{local_time.strftime('%a %d %b, %I:%M %p')}"
+    ]
+
+
+# Mirrors the state machine in app/schemas/appointment.py's ALLOWED_TRANSITIONS
+# and the same check in the public /appointments/{ref}/cancel endpoint — a
+# booking can only be cancelled while it's still PENDING or CONFIRMED.
+CANCELLABLE_STATUSES = ("PENDING", "CONFIRMED")
+
+
+async def _cancel_booking(
+    db: AsyncSession, tenant: Tenant, session: WhatsAppSession, booking_ref: str
+) -> list[str]:
+    result = await db.execute(
+        select(Appointment).where(
+            Appointment.tenant_id == tenant.id,
+            Appointment.booking_ref == booking_ref,
+            Appointment.customer_phone == session.customer_phone,
+        )
+    )
+    appointment = result.scalar_one_or_none()
+    _reset(session)
+    if appointment is None:
+        return ["I couldn't find a booking with that reference on this number."]
+    if appointment.status not in CANCELLABLE_STATUSES:
+        return [
+            f"Booking {appointment.booking_ref} is already {appointment.status} "
+            f"and can't be cancelled. Reply *menu* for other options."
+        ]
+    appointment.status = "CANCELLED"
+    tz = ZoneInfo(tenant.timezone)
+    local_time = appointment.scheduled_at.astimezone(tz)
+    return [
+        f"Cancelled booking {appointment.booking_ref} "
+        f"({local_time.strftime('%a %d %b, %I:%M %p')}).\n\n"
+        f"Reply *menu* for anything else."
     ]
 
 
