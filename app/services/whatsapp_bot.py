@@ -160,7 +160,12 @@ async def _handle_await_slot(
     if idx is None:
         return ["Please reply with the number next to the time you'd like."]
 
-    session.temp_data["chosen_slot"] = options[idx]
+    # Reassign the whole dict (not session.temp_data[key] = ...) — SQLAlchemy
+    # only flags a JSON/JSONB column as dirty on attribute reassignment, not
+    # on in-place mutation of the dict object it currently holds. Mutating
+    # in place here would silently fail to persist, and the next message
+    # would find `chosen_slot` missing after reloading the session.
+    session.temp_data = {**session.temp_data, "chosen_slot": options[idx]}
     session.current_step = "AWAIT_NAME"
     return ["What name should this booking be under?"]
 
