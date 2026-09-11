@@ -73,24 +73,27 @@ def _choice_index(text: str, list_reply_id: str | None, prefix: str) -> int | No
     return None
 
 
-def _render_main_menu() -> dict:
+def _render_main_menu(tenant_name: str) -> dict:
     return {
         "type": "interactive_list",
-        "body_text": "Hi! I can help you book an appointment. Tap below to get started, or reply *menu* any time.",
-        "button_text": "Menu",
+        "body_text": (
+            f"\U0001f31f *{tenant_name}*\n"
+            "_Your appointment, your way._"
+        ),
+        "button_text": "Explore",
         "sections": [
             {
-                "title": "Options",
+                "title": "Choose an Option",
                 "rows": [
-                    {"id": "menu_book", "title": "Book an appointment"},
+                    {"id": "menu_book", "title": "\U0001f4c5 Schedule Appointment"},
                     {
                         "id": "menu_check",
-                        "title": "Check a booking",
-                        "description": "Look up by reference number",
+                        "title": "\U0001f9fe View Booking Details",
+                        "description": "View by reference number",
                     },
                     {
                         "id": "menu_cancel",
-                        "title": "Cancel a booking",
+                        "title": "\u274c Cancel a Booking",
                         "description": "Cancel by reference number",
                     },
                 ],
@@ -113,7 +116,7 @@ async def handle_incoming_message(
     # these words, so this only fires for actual typed text.
     if list_reply_id is None and lowered in ("menu", "hi", "hello", "start"):
         _reset(session)
-        return [_render_main_menu()]
+        return [_render_main_menu(tenant.name)]
 
     if session.current_step == "MAIN_MENU":
         return await _handle_main_menu(db, tenant, session, text, lowered, list_reply_id)
@@ -128,7 +131,7 @@ async def handle_incoming_message(
 
     # Unknown/stale step — don't get the customer stuck.
     _reset(session)
-    return [_render_main_menu()]
+    return [_render_main_menu(tenant.name)]
 
 
 async def _handle_main_menu(
@@ -186,7 +189,7 @@ async def _handle_main_menu(
             return await _cancel_booking(db, tenant, session, booking_ref)
         return await _lookup_booking(db, tenant, session, booking_ref)
 
-    return [_render_main_menu()]
+    return [_render_main_menu(tenant.name)]
 
 
 def text_upper_if_ref(lowered: str) -> str | None:
