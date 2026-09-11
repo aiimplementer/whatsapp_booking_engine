@@ -104,16 +104,30 @@ async def _process_message(phone_number_id: str | None, message: dict) -> None:
         return
 
     async for db in get_db_for_tenant(str(tenant.id)):
+        # Lock this customer's session row for the duration of the transaction.
+        # WhatsApp can redeliver the same webhook, and a fast double-tap can
+        # also produce two overlapping requests for the same customer; without
+        # this lock, two concurrent requests can both read the same
+        # current_step/temp_data before either commits, so a later step (e.g.
+        # a date pick on page 2) gets processed against stale state (e.g.
+        # page 1) and resolves to the wrong item. FOR UPDATE serializes them:
+        # the second request blocks until the first commits and then reads
+        # the up-to-date row.
         result = await db.execute(
-            select(WhatsAppSession).where(
+            select(WhatsAppSession)
+            .where(
                 WhatsAppSession.tenant_id == tenant.id,
                 WhatsAppSession.customer_phone == customer_phone,
             )
+            .with_for_update()
         )
         session = result.scalar_one_or_none()
         if session is None:
+            # Nothing to lock yet — this is the first message from this
+            # customer, so there's no concurrent writer to race against.
             session = WhatsAppSession(tenant_id=tenant.id, customer_phone=customer_phone)
             db.add(session)
+            await db.flush()
 
         # Pass both text and list_reply_id to bot
         replies = await handle_incoming_message(db, tenant, session, text or "", list_reply_id)

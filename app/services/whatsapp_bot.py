@@ -334,14 +334,16 @@ async def _handle_await_date(
 
     if went_prev:
         if date_page > 0:
-            temp_data["date_page"] = date_page - 1
-            return [_render_date_page(tenant.timezone, temp_data)]
+            # Reassign (not mutate-in-place) so SQLAlchemy detects the change
+            # on this JSONB column and actually persists the new page.
+            session.temp_data = {**temp_data, "date_page": date_page - 1}
+            return [_render_date_page(tenant.timezone, session.temp_data)]
         return ["You're already on the first page. Please select a date."]
 
     if went_next:
         if end_idx < len(unique_dates):
-            temp_data["date_page"] = date_page + 1
-            return [_render_date_page(tenant.timezone, temp_data)]
+            session.temp_data = {**temp_data, "date_page": date_page + 1}
+            return [_render_date_page(tenant.timezone, session.temp_data)]
         return ["No more dates available."]
 
     idx = _choice_index(text, list_reply_id, "date_")
