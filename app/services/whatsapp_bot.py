@@ -178,8 +178,10 @@ async def _handle_main_menu(
             return [f"Please send the booking reference you'd like to {verb}, e.g. APT-A1B2C3D4."]
         # A typed reference on its own (no menu tap first) defaults to a
         # lookup unless a pending "cancel" request is waiting on this ref.
+        # Don't clear pending_ref_action here — if the ref turns out not to
+        # match anything, _lookup_booking/_cancel_booking leave temp_data
+        # untouched so a retry with the correct ref still remembers "cancel".
         action = session.temp_data.get("pending_ref_action") or ("cancel" if chose_cancel else "check")
-        session.temp_data = {}
         if action == "cancel":
             return await _cancel_booking(db, tenant, session, booking_ref)
         return await _lookup_booking(db, tenant, session, booking_ref)
@@ -204,9 +206,11 @@ async def _lookup_booking(
         )
     )
     appointment = result.scalar_one_or_none()
-    _reset(session)
     if appointment is None:
-        return ["I couldn't find a booking with that reference on this number."]
+        # Leave temp_data (pending_ref_action) alone so a retry with the
+        # correct reference still remembers what the customer was doing.
+        return ["I couldn't find a booking with that reference on this number. Please double-check and resend it, or reply *menu* to start over."]
+    _reset(session)
     tz = ZoneInfo(tenant.timezone)
     local_time = appointment.scheduled_at.astimezone(tz)
     return [
@@ -233,15 +237,18 @@ async def _cancel_booking(
         )
     )
     appointment = result.scalar_one_or_none()
-    _reset(session)
     if appointment is None:
-        return ["I couldn't find a booking with that reference on this number."]
+        # Same as above — keep pending_ref_action so a corrected reference
+        # on the next message is still treated as a cancel request.
+        return ["I couldn't find a booking with that reference on this number. Please double-check and resend it, or reply *menu* to start over."]
     if appointment.status not in CANCELLABLE_STATUSES:
+        _reset(session)
         return [
             f"Booking {appointment.booking_ref} is already {appointment.status} "
             f"and can't be cancelled. Reply *menu* for other options."
         ]
     appointment.status = "CANCELLED"
+    _reset(session)
     tz = ZoneInfo(tenant.timezone)
     local_time = appointment.scheduled_at.astimezone(tz)
     return [
