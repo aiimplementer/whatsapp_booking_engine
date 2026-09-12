@@ -6,10 +6,8 @@ existing JSON API under /api/v1/* via static/js/api.js. That keeps this
 router free of any DB/session dependencies of its own.
 """
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
-
-from app.platform_admin_auth import require_platform_admin
 
 router = APIRouter(include_in_schema=False)
 templates = Jinja2Templates(directory="app/templates")
@@ -65,12 +63,20 @@ async def admin_settings(request: Request):
     return templates.TemplateResponse(request, "admin/settings.html", {"active_nav": "settings"})
 
 
+@router.get("/platform-admin/login")
+async def platform_admin_login(request: Request):
+    return templates.TemplateResponse(request, "admin/platform_login.html", {})
+
+
 @router.get("/platform-admin")
-async def platform_admin_console(request: Request, _operator: str = Depends(require_platform_admin)):
-    # Basic-auth-gated at the page level too (not just the API it calls), so
-    # the console's markup itself never reaches a browser that hasn't
-    # authenticated — same credentials, browser caches them for the API
-    # calls the page makes afterwards.
+async def platform_admin_console(request: Request):
+    # This route only renders the shell — it doesn't itself check the
+    # session. The page's own script redirects to /platform-admin/login if
+    # there's no token in localStorage, same pattern as the tenant admin
+    # app (Api.requireAuth()). Real enforcement lives at the API layer:
+    # every /api/v1/platform-admin/* route requires a valid Bearer token
+    # (see require_platform_admin), so a page load with a stale/missing
+    # token just gets 401s and bounces to login — it never sees real data.
     return templates.TemplateResponse(request, "admin/platform_console.html", {})
 
 

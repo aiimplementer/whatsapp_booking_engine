@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Slotbook — booking, kept like a ledger{% endblock %}
+{% block title %}ScheduleMate — booking, kept like a ledger{% endblock %}
+{% block bodyclass %}no-ruling{% endblock %}
 {% block content %}
 <div class="container">
   <section class="hero">
     <h1>Appointments booked over WhatsApp, kept like a proper ledger.</h1>
     <p class="sub">
-      Slotbook gives your business a booking link and a WhatsApp number.
+      ScheduleMate gives your business a booking link and a WhatsApp number.
       Customers pick a time, you see it land on the page instantly — no
       double-bookings, no back-and-forth.
     </p>
@@ -33,9 +34,9 @@
     </div>
   </section>
 
-  <section class="panel narrow" style="margin: 0 auto 3rem;">
+  <section class="panel narrow" style="margin: 0 auto 2rem;">
     <h3>Try the customer booking page</h3>
-    <p class="muted" style="margin-bottom: 1rem;">Have a business slug already?
+    <p class="muted" style="margin-bottom: 0.85rem;">Have a business slug already?
     Jump straight to its public booking page.</p>
     <form id="try-form" class="row" onsubmit="event.preventDefault(); go();">
       <input type="text" id="slug-input" placeholder="business-slug" style="flex:1; min-width: 180px;" />

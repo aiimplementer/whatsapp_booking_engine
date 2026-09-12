@@ -32,3 +32,15 @@ class PaginatedTenants(BaseModel):
 
 class SubscriptionUpdate(BaseModel):
     enabled: bool
+
+
+class PlatformAdminLoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class PlatformAdminTokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    username: str

@@ -3,7 +3,7 @@ const api = (path, opts = {}) => Api.request(`/api/v1/public/${slug}${path}`, { 
 
 const pbEls = {
   loadError: document.getElementById('load-error'),
-  app: document.getElementById('booking-app'),
+  root: document.getElementById('booking-root'),
   bizName: document.getElementById('biz-name'),
   serviceList: document.getElementById('service-list'),
   stepSlots: document.getElementById('step-slots'),
@@ -19,7 +19,27 @@ const pbEls = {
   confWhen: document.getElementById('conf-when'),
   lookupForm: document.getElementById('lookup-form'),
   lookupResult: document.getElementById('lookup-result'),
+  tabNew: document.getElementById('tab-new'),
+  tabLookup: document.getElementById('tab-lookup'),
+  bookingAppView: document.getElementById('booking-app'),
+  lookupView: document.getElementById('lookup-view'),
 };
+
+/* ---- New booking / Look up switch --------------------------------------- */
+// A segmented toggle rather than stacking both flows on the page — only one
+// is visible at a time, so the page doesn't grow tall just to accommodate
+// an occasional-use lookup form underneath the main flow.
+function setMode(mode) {
+  const isNew = mode === 'new';
+  pbEls.tabNew.classList.toggle('active', isNew);
+  pbEls.tabLookup.classList.toggle('active', !isNew);
+  pbEls.tabNew.setAttribute('aria-selected', String(isNew));
+  pbEls.tabLookup.setAttribute('aria-selected', String(!isNew));
+  pbEls.bookingAppView.classList.toggle('hidden', !isNew);
+  pbEls.lookupView.classList.toggle('hidden', isNew);
+}
+pbEls.tabNew.addEventListener('click', () => setMode('new'));
+pbEls.tabLookup.addEventListener('click', () => setMode('lookup'));
 
 let services = [];
 let selectedServiceId = null;
@@ -211,7 +231,7 @@ async function init() {
   try {
     const info = await api('');
     pbEls.loadError.classList.add('hidden');
-    pbEls.app.classList.remove('hidden');
+    pbEls.root.classList.remove('hidden');
     pbEls.bizName.textContent = info.name;
     services = info.services || [];
     if (services.length > 0) {
@@ -223,7 +243,7 @@ async function init() {
       loadSlots();
     }
   } catch (err) {
-    pbEls.app.classList.add('hidden');
+    pbEls.root.classList.add('hidden');
     pbEls.loadError.classList.remove('hidden');
     pbEls.loadError.textContent =
       err.status === 404

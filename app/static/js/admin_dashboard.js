@@ -52,7 +52,8 @@ els.serviceSelect.addEventListener('change', () => {
 });
 
 function renderRow(a) {
-  const { time } = fmtDateTime(a.scheduled_at);
+  const tz = Api.getTenantTimezone();
+  const { time } = fmtDateTime(a.scheduled_at, tz);
   const actions = (NEXT_ACTIONS[a.status] || [])
     .map(
       (t) =>
@@ -77,28 +78,34 @@ function renderRow(a) {
 }
 
 // Groups appointments (already sorted by scheduled_at from the API) into
-// day buckets in the viewer's local timezone, so the list reads like pages
-// in a diary — one date header per day — instead of one long flat run
-// where you have to read every row's small date label to tell days apart.
-function groupByDate(appts) {
+// day buckets by the tenant's local calendar date — the business's own
+// timezone (set in Business settings), not the viewer's browser timezone —
+// so the list reads like pages in a diary — one date header per day —
+// instead of one long flat run where you have to read every row's small
+// date label to tell days apart, and so "Today" always means today at the
+// front desk, not today wherever the logged-in staff member's laptop
+// happens to think it is.
+function groupByDate(appts, tz) {
   const groups = [];
   let currentKey = null;
   for (const a of appts) {
     const d = new Date(a.scheduled_at);
-    const key = d.toDateString();
+    const key = tzDateKey(d, tz);
     if (key !== currentKey) {
       currentKey = key;
-      groups.push({ date: d, items: [] });
+      groups.push({ key, date: d, items: [] });
     }
     groups[groups.length - 1].items.push(a);
   }
   return groups;
 }
 
-function dateHeaderLabel(d) {
-  const startOfDay = (x) => { const c = new Date(x); c.setHours(0, 0, 0, 0); return c; };
-  const diffDays = Math.round((startOfDay(d) - startOfDay(new Date())) / 86400000);
-  const full = d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+function dateHeaderLabel(group, tz) {
+  const todayKey = tzDateKey(new Date(), tz);
+  const diffDays = Math.round((dateKeyToUtc(group.key) - dateKeyToUtc(todayKey)) / 86400000);
+  const full = new Intl.DateTimeFormat(undefined, {
+    timeZone: tz, weekday: "long", month: "long", day: "numeric", year: "numeric",
+  }).format(group.date);
   if (diffDays === 0) return `Today · ${full}`;
   if (diffDays === 1) return `Tomorrow · ${full}`;
   if (diffDays === -1) return `Yesterday · ${full}`;
@@ -112,12 +119,13 @@ function dateHeaderLabel(d) {
 const INACTIVE_STATUSES = new Set(['CANCELLED', 'NO_SHOW', 'EXPIRED']);
 
 function renderLedger(appts) {
-  return groupByDate(appts)
+  const tz = Api.getTenantTimezone();
+  return groupByDate(appts, tz)
     .map((g) => {
       const count = g.items.filter((a) => !INACTIVE_STATUSES.has(a.status)).length;
       return `
         <div class="ledger-date-header">
-          <span>${dateHeaderLabel(g.date)}</span>
+          <span>${dateHeaderLabel(g, tz)}</span>
           <span class="muted">${count} appointment${count === 1 ? "" : "s"}</span>
         </div>
         ${g.items.map(renderRow).join("")}
@@ -224,6 +232,12 @@ const presetPhone = presetParams.get('phone');
 if (presetDate) {
   document.getElementById('f-from').value = presetDate;
   document.getElementById('f-to').value = presetDate;
+} else {
+  // Default view opens on today's page of the ledger (tenant-local date),
+  // not the oldest appointment on record — otherwise a business running
+  // for months loads with last spring buried at the top and "today"
+  // scrolled miles down. Staff can still clear "From" to pull up history.
+  document.getElementById('f-from').value = tzDateKey(new Date(), Api.getTenantTimezone());
 }
 if (presetPhone) {
   document.getElementById('f-phone').value = presetPhone;

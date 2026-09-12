@@ -1,5 +1,5 @@
 {% extends "admin/_shell.html" %}
-{% block title %}Business settings — Slotbook{% endblock %}
+{% block title %}Business settings — ScheduleMate{% endblock %}
 {% block admin_content %}
 <div class="page-head">
   <div>
@@ -8,38 +8,52 @@
   </div>
 </div>
 
-<div class="panel narrow" style="max-width: 560px;">
+<div class="panel narrow" style="max-width: 720px;">
   <div id="settings-banner" class="banner banner-error" hidden></div>
   <div id="settings-ok" class="banner banner-ok" hidden></div>
   <div id="skeleton" class="skeleton">Loading…</div>
-  <form id="settings-form" class="hidden">
-    <div class="field">
-      <label for="s-name">Business name</label>
-      <input type="text" id="s-name" required maxlength="255" />
-    </div>
-    <div class="field">
-      <label>Booking link</label>
-      <input type="text" disabled id="s-slug" />
-      <div class="field-hint">The slug can't be changed here — it's your public link's address.</div>
-    </div>
-    <div class="field">
-      <label for="s-phone">Phone</label>
-      <input type="tel" id="s-phone" required />
-    </div>
-    <div class="field">
-      <label for="s-timezone">Timezone</label>
-      <select id="s-timezone" required></select>
-    </div>
-    <div class="field">
-      <label for="s-whatsapp">WhatsApp number (optional)</label>
-      <input type="tel" id="s-whatsapp" placeholder="+919876543210" />
-    </div>
-    <div class="field">
-      <label class="row" style="font-weight:400;">
-        <input type="checkbox" id="s-web-booking" style="width:auto;" />
-        Allow customers to book online via the public link
-      </label>
-    </div>
+  <form id="settings-form" class="hidden settings-form">
+    <fieldset>
+      <legend>Business details</legend>
+      <div class="field-row">
+        <div class="field">
+          <label for="s-name">Business name</label>
+          <input type="text" id="s-name" required maxlength="255" />
+        </div>
+        <div class="field">
+          <label>Booking link</label>
+          <input type="text" disabled id="s-slug" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="s-phone">Phone</label>
+          <input type="tel" id="s-phone" required />
+        </div>
+        <div class="field">
+          <label for="s-timezone">Timezone</label>
+          <select id="s-timezone" required></select>
+        </div>
+      </div>
+      <div class="field-hint">The booking link's slug can't be changed here — it's your public link's address.</div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Booking preferences</legend>
+      <div class="field-row">
+        <div class="field">
+          <label for="s-whatsapp">WhatsApp number (optional)</label>
+          <input type="tel" id="s-whatsapp" placeholder="+919876543210" />
+        </div>
+        <div class="field field-check">
+          <label class="row" style="font-weight:400;">
+            <input type="checkbox" id="s-web-booking" style="width:auto;" />
+            Allow customers to book online via the public link
+          </label>
+        </div>
+      </div>
+    </fieldset>
+
     <button class="btn" type="submit" id="settings-submit">Save changes</button>
   </form>
 </div>

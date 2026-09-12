@@ -17,13 +17,16 @@ function buildQuery() {
 }
 
 function renderRow(c) {
-  const { date: lastVisit } = fmtDateTime(c.last_visit_at);
+  const tz = Api.getTenantTimezone();
+  const { date: customerSince } = fmtDateTime(c.first_visit_at, tz);
+  const { date: lastVisit } = fmtDateTime(c.last_visit_at, tz);
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td>${escapeHtml(c.name)}</td>
     <td><a class="quiet mono" href="/admin?phone=${encodeURIComponent(c.phone)}">${escapeHtml(c.phone)}</a></td>
     <td>${c.total_appointments}</td>
     <td>${c.completed_appointments}</td>
+    <td>${customerSince}</td>
     <td>${lastVisit}</td>
   `;
   return tr;

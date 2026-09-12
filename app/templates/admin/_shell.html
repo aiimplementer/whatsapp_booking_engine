@@ -1,7 +1,21 @@
 {% extends "base.html" %}
 {% block nav %}
-<nav>
-  <a href="#" id="nav-booking-link">Booking page</a>
+<nav class="admin-topnav">
+  <a href="#" id="nav-booking-link" class="btn btn-secondary btn-small" target="_blank" rel="noopener">
+    Booking page
+    <svg class="icon-external" width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M6 3H3.5A1.5 1.5 0 0 0 2 4.5v8A1.5 1.5 0 0 0 3.5 14h8a1.5 1.5 0 0 0 1.5-1.5V10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M9.5 2H14v4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M14 2 7 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </a>
+  <span class="topnav-divider"></span>
+  <span class="topnav-user">
+    <span class="topnav-avatar" id="header-user-avatar"></span>
+    <span class="user-email" id="header-user-email">&nbsp;</span>
+    <span class="stamp" id="header-user-role"></span>
+  </span>
+  <a href="#" id="nav-logout" class="btn-logout">Log out</a>
 </nav>
 {% endblock %}
 {% block bodyclass %}no-ruling{% endblock %}
@@ -19,13 +33,11 @@
       <li><a href="/admin/staff" data-nav="staff">Staff</a></li>
       <li><a href="/admin/settings" data-nav="settings">Business settings</a></li>
     </ul>
-
-    <div class="sidebar-user">
-      <span class="user-email" id="sidebar-user-email">&nbsp;</span>
-      <div class="row" style="gap: 0.6rem; margin-top: 0.35rem;">
-        <span class="stamp" id="sidebar-user-role"></span>
-        <a href="#" id="nav-logout" class="quiet">Log out</a>
-      </div>
+    <div class="sidebar-footer">
+      <a class="powered-by" href="https://ai-implementer.netlify.app/" target="_blank" rel="noopener">
+        <span>Powered by</span>
+        <img src="/static/img/ai-implementer-logo.png" alt="AI Implementer" />
+      </a>
     </div>
   </aside>
   <div class="app-main">
@@ -33,27 +45,37 @@
   </div>
 </div>
 {% endblock %}
+{% block footer %}{% endblock %}
 {% block scripts %}
 <script>
   if (!Api.requireAuth()) { /* redirected */ }
   document.getElementById('sidebar-tenant-name').textContent = Api.getTenantName() || 'Your business';
   document.getElementById('sidebar-tenant-slug').textContent = Api.getTenantSlug() ? '/' + Api.getTenantSlug() : '';
-  document.getElementById('sidebar-user-email').textContent = Api.getEmail() || '';
-  const roleEl = document.getElementById('sidebar-user-role');
-  function renderRole(role) {
+  // Re-fetch the tenant record too (not just cached signup/login-time data)
+  // so a timezone change made in Business settings takes effect on the very
+  // next page load, without waiting for a re-login.
+  Api.get('/api/v1/tenants/me').then((tenant) => {
+    Api.setSession({ tenant_name: tenant.name, tenant_timezone: tenant.timezone });
+    document.getElementById('sidebar-tenant-name').textContent = tenant.name;
+  }).catch(() => { /* keep whatever was cached */ });
+  const emailEl = document.getElementById('header-user-email');
+  const roleEl = document.getElementById('header-user-role');
+  const avatarEl = document.getElementById('header-user-avatar');
+  function renderUser(email, role) {
+    if (email) emailEl.textContent = email;
+    avatarEl.textContent = (email || '?').trim().charAt(0);
     role = (role || '').toLowerCase();
     if (!role) return;
     roleEl.textContent = role.charAt(0).toUpperCase() + role.slice(1);
     roleEl.className = `stamp stamp-role-${role}`;
   }
-  renderRole(Api.getRole());
+  renderUser(Api.getEmail(), Api.getRole());
   // Re-fetch rather than trust only the cached session value — keeps this
   // correct for sessions logged in before email/role were cached here, and
   // reflects a role change made elsewhere without waiting for a re-login.
   Api.get('/api/v1/auth/me').then((me) => {
     Api.setSession({ role: me.role, email: me.email });
-    document.getElementById('sidebar-user-email').textContent = me.email;
-    renderRole(me.role);
+    renderUser(me.email, me.role);
   }).catch(() => { /* keep whatever was cached */ });
   const bookingLink = document.getElementById('nav-booking-link');
   if (bookingLink && Api.getTenantSlug()) {

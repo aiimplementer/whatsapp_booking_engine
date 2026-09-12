@@ -1,9 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Platform admin — Slotbook{% endblock %}
+{% block title %}Platform admin — ScheduleMate{% endblock %}
 {% block bodyclass %}no-ruling{% endblock %}
 {% block nav %}
-<nav>
-  <span class="muted">Platform admin</span>
+<nav class="admin-topnav">
+  <a class="nav-secondary" href="/">&larr; Back to ScheduleMate</a>
+  <span class="topnav-divider"></span>
+  <span class="muted" id="header-username"></span>
+  <span class="topnav-divider"></span>
+  <a href="#" id="nav-logout" class="btn-logout">Log out</a>
 </nav>
 {% endblock %}
 {% block content %}
@@ -11,7 +15,7 @@
   <div class="page-head">
     <div>
       <h1>Tenants</h1>
-      <p class="lede">Every business on Slotbook, across all subscription tiers.</p>
+      <p class="lede">Every business on ScheduleMate, across all subscription tiers.</p>
     </div>
   </div>
 

@@ -1,23 +1,25 @@
 {% extends "base.html" %}
-{% block title %}Set up your business — Slotbook{% endblock %}
+{% block title %}Set up your business — ScheduleMate{% endblock %}
 {% block content %}
 <div class="container">
-  <div class="auth-wrap">
+  <div class="auth-wrap auth-wrap-wide">
     <h1 class="center">Set up your business</h1>
-    <p class="muted center" style="margin: 0 auto 1.5rem;">Creates your business
+    <p class="muted center" style="margin: 0 auto 1rem;">Creates your business
     and your admin login in one step.</p>
     <div class="panel">
       <div id="banner" class="banner banner-error" hidden></div>
       <form id="signup-form">
-        <div class="field">
-          <label for="business_name">Business name</label>
-          <input type="text" id="business_name" required maxlength="255" placeholder="Nimbus Hair Studio" />
+        <div class="field-row">
+          <div class="field">
+            <label for="business_name">Business name</label>
+            <input type="text" id="business_name" required maxlength="255" placeholder="Nimbus Hair Studio" />
+          </div>
+          <div class="field">
+            <label for="tenant_slug">Booking link slug</label>
+            <input type="text" id="tenant_slug" required pattern="[a-z0-9-]+" placeholder="nimbus-hair" />
+          </div>
         </div>
-        <div class="field">
-          <label for="tenant_slug">Booking link slug</label>
-          <input type="text" id="tenant_slug" required pattern="[a-z0-9-]+" placeholder="nimbus-hair" />
-          <div class="field-hint">Lowercase letters, numbers, hyphens. This becomes <span class="mono">/book/your-slug</span>.</div>
-        </div>
+        <div class="field-hint" style="margin: -0.5rem 0 0.8rem;">Slug: lowercase letters, numbers, hyphens. Becomes <span class="mono">/book/your-slug</span>.</div>
         <div class="field-row">
           <div class="field">
             <label for="business_email">Business email</label>
@@ -31,17 +33,18 @@
         <div class="field">
           <label for="business_timezone">Timezone</label>
           <select id="business_timezone" required></select>
-          <div class="field-hint">Used to work out your booking hours and slot times. We've guessed based on your browser — change it if that's wrong.</div>
         </div>
         <fieldset>
           <legend>Your admin login</legend>
-          <div class="field">
-            <label for="admin_email">Email</label>
-            <input type="email" id="admin_email" required placeholder="owner@nimbus.example" />
-          </div>
-          <div class="field" style="margin-bottom: 0;">
-            <label for="admin_password">Password</label>
-            <input type="password" id="admin_password" required minlength="8" placeholder="At least 8 characters" />
+          <div class="field-row">
+            <div class="field" style="margin-bottom: 0;">
+              <label for="admin_email">Email</label>
+              <input type="email" id="admin_email" required placeholder="owner@nimbus.example" />
+            </div>
+            <div class="field" style="margin-bottom: 0;">
+              <label for="admin_password">Password</label>
+              <input type="password" id="admin_password" required minlength="8" placeholder="At least 8 characters" />
+            </div>
           </div>
         </fieldset>
         <button class="btn btn-block" type="submit" id="submit-btn">Create business</button>
@@ -86,6 +89,7 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
       refresh_token: data.refresh_token,
       tenant_slug: body.tenant_slug,
       tenant_name: body.business_name,
+      tenant_timezone: body.timezone,
       role: 'admin',
       email: body.admin_email,
     });

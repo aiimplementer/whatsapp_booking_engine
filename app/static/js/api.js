@@ -7,6 +7,7 @@ const Api = (() => {
   const REFRESH_KEY = "wb_refresh_token";
   const TENANT_SLUG_KEY = "wb_tenant_slug";
   const TENANT_NAME_KEY = "wb_tenant_name";
+  const TENANT_TIMEZONE_KEY = "wb_tenant_timezone";
   const ROLE_KEY = "wb_role";
   const EMAIL_KEY = "wb_email";
 
@@ -14,20 +15,25 @@ const Api = (() => {
   function getRefreshToken() { return localStorage.getItem(REFRESH_KEY); }
   function getTenantSlug() { return localStorage.getItem(TENANT_SLUG_KEY) || ""; }
   function getTenantName() { return localStorage.getItem(TENANT_NAME_KEY) || ""; }
+  // Falls back to Asia/Kolkata (the platform default for new tenants — see
+  // SignupRequest.timezone) rather than the viewer's own browser timezone,
+  // so a page can never silently drift to "wherever the admin happens to be".
+  function getTenantTimezone() { return localStorage.getItem(TENANT_TIMEZONE_KEY) || "Asia/Kolkata"; }
   function getRole() { return localStorage.getItem(ROLE_KEY) || ""; }
   function getEmail() { return localStorage.getItem(EMAIL_KEY) || ""; }
 
-  function setSession({ access_token, refresh_token, tenant_slug, tenant_name, role, email }) {
+  function setSession({ access_token, refresh_token, tenant_slug, tenant_name, tenant_timezone, role, email }) {
     if (access_token) localStorage.setItem(ACCESS_KEY, access_token);
     if (refresh_token) localStorage.setItem(REFRESH_KEY, refresh_token);
     if (tenant_slug) localStorage.setItem(TENANT_SLUG_KEY, tenant_slug);
     if (tenant_name) localStorage.setItem(TENANT_NAME_KEY, tenant_name);
+    if (tenant_timezone) localStorage.setItem(TENANT_TIMEZONE_KEY, tenant_timezone);
     if (role) localStorage.setItem(ROLE_KEY, role);
     if (email) localStorage.setItem(EMAIL_KEY, email);
   }
 
   function clearSession() {
-    [ACCESS_KEY, REFRESH_KEY, TENANT_SLUG_KEY, TENANT_NAME_KEY, ROLE_KEY, EMAIL_KEY].forEach((k) =>
+    [ACCESS_KEY, REFRESH_KEY, TENANT_SLUG_KEY, TENANT_NAME_KEY, TENANT_TIMEZONE_KEY, ROLE_KEY, EMAIL_KEY].forEach((k) =>
       localStorage.removeItem(k)
     );
   }
@@ -110,7 +116,7 @@ const Api = (() => {
   const del = (path) => request(path, { method: "DELETE" });
 
   return {
-    getAccessToken, getRefreshToken, getTenantSlug, getTenantName, getRole, getEmail,
+    getAccessToken, getRefreshToken, getTenantSlug, getTenantName, getTenantTimezone, getRole, getEmail,
     setSession, clearSession, isLoggedIn, requireAuth,
     request, get, post, patch, put, del,
   };
@@ -139,12 +145,31 @@ function showBanner(el, message) {
   el.hidden = false;
 }
 
-function fmtDateTime(iso) {
+function fmtDateTime(iso, timeZone) {
   const d = new Date(iso);
+  const opts = timeZone ? { timeZone } : {};
   return {
-    date: d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }),
-    time: d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }),
+    date: d.toLocaleDateString(undefined, {
+      weekday: "short", month: "short", day: "numeric", year: "numeric", ...opts,
+    }),
+    time: d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", ...opts }),
   };
+}
+
+// YYYY-MM-DD for `d` as a calendar date *in `timeZone`* — used to bucket
+// appointments by the tenant's local day rather than the viewer's, since a
+// UTC instant can fall on different calendar dates in different zones.
+function tzDateKey(d, timeZone) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(d);
+}
+
+// Turns a "YYYY-MM-DD" key back into a UTC-midnight Date purely so two keys
+// can be subtracted to get a whole number of days apart, independent of DST.
+function dateKeyToUtc(key) {
+  const [y, m, d] = key.split("-").map(Number);
+  return Date.UTC(y, m - 1, d);
 }
 
 function escapeHtml(str) {

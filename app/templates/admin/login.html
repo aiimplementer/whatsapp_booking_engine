@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Log in — Slotbook{% endblock %}
+{% block title %}Log in — ScheduleMate{% endblock %}
 {% block content %}
 <div class="container">
   <div class="auth-wrap">
     <h1 class="center">Log in</h1>
-    <p class="muted center" style="margin: 0 auto 1.5rem;">You'll need your
+    <p class="muted center" style="margin: 0 auto 1rem;">You'll need your
     business slug as well as your email and password.</p>
     <div class="panel">
       <div id="banner" class="banner banner-error" hidden></div>
@@ -21,7 +21,7 @@
           <label for="password">Password</label>
           <input type="password" id="password" required placeholder="••••••••" />
         </div>
-        <div style="height: 1rem;"></div>
+        <div style="height: 0.5rem;"></div>
         <button class="btn btn-block" type="submit" id="submit-btn">Log in</button>
       </form>
     </div>
@@ -53,7 +53,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     });
     const me = await Api.get('/api/v1/auth/me');
     const tenant = await Api.get('/api/v1/tenants/me');
-    Api.setSession({ role: me.role, email: me.email, tenant_name: tenant.name });
+    Api.setSession({ role: me.role, email: me.email, tenant_name: tenant.name, tenant_timezone: tenant.timezone });
     window.location.href = '/admin';
   } catch (err) {
     showBanner(banner, err.detail || err.message);

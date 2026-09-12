@@ -15,6 +15,7 @@ app.include_router(appointments.router)
 app.include_router(customers.router)
 app.include_router(public.router)
 app.include_router(whatsapp.router)
+app.include_router(platform_admin.auth_router)
 app.include_router(platform_admin.router)
 
 # Server-rendered UI (landing page, admin dashboard, public booking page).

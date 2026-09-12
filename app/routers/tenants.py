@@ -93,6 +93,12 @@ async def update_staff_role(
     if target is None or target.tenant_id != current_user.tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
+    if target.is_owner:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The account owner's role can't be changed",
+        )
+
     if target.id == current_user.id and body.role != "admin":
         await _ensure_not_last_admin(db, current_user.tenant_id, exclude_user_id=target.id)
 
@@ -111,6 +117,12 @@ async def remove_staff(
     target = await db.get(TenantUser, user_id)
     if target is None or target.tenant_id != current_user.tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    if target.is_owner:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The account owner can't be removed",
+        )
 
     if target.role == "admin":
         await _ensure_not_last_admin(db, current_user.tenant_id, exclude_user_id=target.id)

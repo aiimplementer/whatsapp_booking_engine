@@ -8,18 +8,43 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db, get_db_for_tenant
 from app.models.audit_log import AuditLog
 from app.models.tenant import Tenant, TenantUser
-from app.platform_admin_auth import require_platform_admin
+from app.platform_admin_auth import (
+    create_platform_admin_token,
+    require_platform_admin,
+    verify_platform_admin_credentials,
+)
 from app.schemas.platform_admin import (
     PaginatedTenants,
+    PlatformAdminLoginRequest,
+    PlatformAdminTokenResponse,
     PlatformTenantOut,
     SubscriptionUpdate,
 )
+
+# Unauthenticated on purpose — this is the endpoint that *hands out* the
+# token everything below requires. Kept as its own router (rather than a
+# route on `router`) so it isn't swept up by that router's blanket
+# require_platform_admin dependency.
+auth_router = APIRouter(prefix="/api/v1/platform-admin/auth", tags=["platform-admin"])
 
 router = APIRouter(
     prefix="/api/v1/platform-admin",
     tags=["platform-admin"],
     dependencies=[Depends(require_platform_admin)],
 )
+
+
+@auth_router.post("/login", response_model=PlatformAdminTokenResponse)
+async def platform_admin_login(body: PlatformAdminLoginRequest):
+    if not verify_platform_admin_credentials(body.username, body.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid platform admin credentials",
+        )
+    token, expires_in = create_platform_admin_token(body.username)
+    return PlatformAdminTokenResponse(
+        access_token=token, expires_in=expires_in, username=body.username
+    )
 
 
 async def _admin_email_for(tenant_id: uuid.UUID) -> str | None:

@@ -58,5 +58,9 @@ class TenantUser(UUIDPKMixin, TimestampMixin, Base):
     email: Mapped[str] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(tenant_user_role_enum, default="staff")
     password_hash: Mapped[str] = mapped_column(String(255))
+    # The user created alongside the tenant at signup — see migration 0003.
+    # Their role/removal is locked regardless of who is asking, including
+    # other admins; every other tenant_user stays freely editable.
+    is_owner: Mapped[bool] = mapped_column(Boolean, default=False)
 
     tenant: Mapped["Tenant"] = relationship(back_populates="users")

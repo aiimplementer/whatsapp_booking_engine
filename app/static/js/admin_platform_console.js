@@ -1,7 +1,30 @@
 /* Platform admin console. Talks to /api/v1/platform-admin/* which is
- * guarded by HTTP Basic auth (not the tenant JWT system in api.js) — the
- * browser already holds those credentials from loading this page, and
- * resends them automatically for same-origin requests. */
+ * guarded by a Bearer JWT (not the tenant JWT system in api.js — see
+ * admin_platform_login.js for why it's a separate token/key). */
+
+const PLATFORM_ADMIN_TOKEN_KEY = "wb_platform_admin_token";
+const PLATFORM_ADMIN_USERNAME_KEY = "wb_platform_admin_username";
+
+function platformAdminToken() {
+  return localStorage.getItem(PLATFORM_ADMIN_TOKEN_KEY);
+}
+
+function goToLogin() {
+  localStorage.removeItem(PLATFORM_ADMIN_TOKEN_KEY);
+  localStorage.removeItem(PLATFORM_ADMIN_USERNAME_KEY);
+  window.location.href = "/platform-admin/login";
+}
+
+if (!platformAdminToken()) {
+  goToLogin();
+}
+
+document.getElementById("header-username").textContent =
+  localStorage.getItem(PLATFORM_ADMIN_USERNAME_KEY) || "";
+document.getElementById("nav-logout").addEventListener("click", (e) => {
+  e.preventDefault();
+  goToLogin();
+});
 
 const state = { search: "", page: 1, pageSize: 20 };
 
@@ -25,11 +48,13 @@ function buildUrl() {
 }
 
 async function fetchTenants() {
-  const res = await fetch(buildUrl(), { headers: { Accept: "application/json" } });
+  const res = await fetch(buildUrl(), {
+    headers: { Accept: "application/json", Authorization: `Bearer ${platformAdminToken()}` },
+  });
   if (res.status === 401) {
-    // Cached Basic auth credentials were rejected/missing — reload so the
-    // browser re-prompts rather than silently showing an empty console.
-    window.location.reload();
+    // Token missing/expired/rejected — bounce to a real login page rather
+    // than silently showing an empty console.
+    goToLogin();
     throw new Error("Unauthorized");
   }
   if (!res.ok) {
@@ -76,9 +101,16 @@ async function onToggleSubscription(e) {
   try {
     const res = await fetch(`/api/v1/platform-admin/tenants/${tenantId}/subscription`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${platformAdminToken()}`,
+      },
       body: JSON.stringify({ enabled: nextEnabled }),
     });
+    if (res.status === 401) {
+      goToLogin();
+      throw new Error("Unauthorized");
+    }
     if (!res.ok) {
       const body = await res.json().catch(() => null);
       throw new Error((body && body.detail) || `Request failed (${res.status})`);

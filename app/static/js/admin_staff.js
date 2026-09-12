@@ -39,16 +39,27 @@ async function loadStaff() {
       .map(
         (u) => `
       <tr data-id="${u.id}">
-        <td>${escapeHtml(u.email)}${u.id === myUserId ? ' <span class="muted">(you)</span>' : ''}</td>
         <td>
-          <select class="role-select" data-id="${u.id}" style="width:auto;">
-            <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
-            <option value="staff" ${u.role === 'staff' ? 'selected' : ''}>Staff</option>
-            <option value="viewer" ${u.role === 'viewer' ? 'selected' : ''}>Viewer</option>
-          </select>
+          ${escapeHtml(u.email)}${u.id === myUserId ? ' <span class="muted">(you)</span>' : ''}
+          ${u.is_owner ? ' <span class="stamp" title="Account owner — role is locked">Owner</span>' : ''}
+        </td>
+        <td>
+          ${
+            u.is_owner
+              ? `<span class="stamp stamp-role-admin">Admin</span>`
+              : `<select class="role-select" data-id="${u.id}" style="width:auto;">
+              <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+              <option value="staff" ${u.role === 'staff' ? 'selected' : ''}>Staff</option>
+              <option value="viewer" ${u.role === 'viewer' ? 'selected' : ''}>Viewer</option>
+            </select>`
+          }
         </td>
         <td class="muted">${new Date(u.created_at).toLocaleDateString()}</td>
-        <td><button class="btn btn-small btn-danger" data-remove="${u.id}">Remove</button></td>
+        <td>${
+          u.is_owner
+            ? ''
+            : `<button class="btn btn-small btn-danger" data-remove="${u.id}">Remove</button>`
+        }</td>
       </tr>`
       )
       .join('');

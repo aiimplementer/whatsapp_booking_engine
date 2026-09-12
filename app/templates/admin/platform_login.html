@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Platform admin login — ScheduleMate{% endblock %}
+{% block nav %}
+<nav>
+  <a class="nav-secondary" href="/">&larr; Back to ScheduleMate</a>
+  <span class="muted">Platform admin</span>
+</nav>
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="auth-wrap">
+    <h1 class="center">Platform admin</h1>
+    <p class="muted center" style="margin: 0 auto 1rem;">Operator console —
+    manage tenants and subscriptions across ScheduleMate.</p>
+    <div class="panel">
+      <div id="banner" class="banner banner-error" hidden></div>
+      <form id="platform-login-form">
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" required autocomplete="username" />
+        </div>
+        <div class="field" style="margin-bottom: 0;">
+          <label for="password">Password</label>
+          <input type="password" id="password" required autocomplete="current-password" placeholder="••••••••" />
+        </div>
+        <div style="height: 0.5rem;"></div>
+        <button class="btn btn-block" type="submit" id="submit-btn">Log in</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/admin_platform_login.js"></script>
+{% endblock %}

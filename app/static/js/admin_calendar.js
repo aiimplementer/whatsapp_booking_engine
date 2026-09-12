@@ -6,9 +6,14 @@ const els = {
   next: document.getElementById('cal-next'),
 };
 
-const today = new Date();
-let viewYear = today.getFullYear();
-let viewMonth = today.getMonth() + 1; // 1-12, matches the API's `month` param
+// "Today" and the initial month shown are anchored to the tenant's own
+// timezone (Business settings), not the viewer's browser clock — so staff
+// see the same calendar regardless of what machine they're logged in on.
+const tz = Api.getTenantTimezone();
+const todayKey = tzDateKey(new Date(), tz);
+const [todayYear, todayMonth] = todayKey.split('-').map(Number);
+let viewYear = todayYear;
+let viewMonth = todayMonth; // 1-12, matches the API's `month` param
 
 function pad(n) {
   return String(n).padStart(2, '0');
@@ -39,7 +44,6 @@ function renderGrid(counts) {
   const firstOfMonth = new Date(viewYear, viewMonth - 1, 1);
   const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
   const startWeekday = firstOfMonth.getDay(); // 0 = Sunday
-  const todayKey = dateKey(today.getFullYear(), today.getMonth() + 1, today.getDate());
 
   const cells = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
     (w) => `<div class="month-weekday">${w}</div>`

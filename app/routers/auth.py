@@ -70,6 +70,7 @@ async def signup(body: SignupRequest, db: AsyncSession = Depends(get_db)):
             email=body.admin_email,
             role="admin",
             password_hash=hash_password(body.admin_password),
+            is_owner=True,
         )
         tenant_db.add(admin_user)
         try:
