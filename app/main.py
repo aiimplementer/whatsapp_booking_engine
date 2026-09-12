@@ -24,10 +24,11 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(web.router)
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health_check():
     async with engine.connect() as conn:
         await conn.execute(text("SELECT 1"))
+
     return {"status": "ok"}
 
 
