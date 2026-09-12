@@ -1,0 +1,129 @@
+{% extends "admin/_shell.html" %}
+{% block title %}Help — ScheduleMate{% endblock %}
+{% block admin_content %}
+<div class="page-head">
+  <div>
+    <h1>Help</h1>
+    <p class="lede">What each screen does, and how to use it. Sections match the sidebar, top to bottom.</p>
+  </div>
+</div>
+
+<div class="panel">
+  <h3>On this page</h3>
+  <div class="row" style="flex-wrap: wrap; gap: 0.5rem 1.25rem;">
+    <a href="#help-appointments">Appointments</a>
+    <a href="#help-calendar">Calendar</a>
+    <a href="#help-customers">Customers</a>
+    <a href="#help-services">Services</a>
+    <a href="#help-scheduling">Scheduling</a>
+    <a href="#help-staff">Staff &amp; roles</a>
+    <a href="#help-settings">Business settings</a>
+    <a href="#help-booking-link">Your booking link &amp; WhatsApp</a>
+    <a href="#help-faq">Common questions</a>
+  </div>
+</div>
+
+<div class="panel" id="help-appointments">
+  <h2>Appointments</h2>
+  <p>Every booking that comes in through your link, plus anything you add by hand, lives here in one running list — grouped by day, newest activity first.</p>
+  <ul>
+    <li><strong>Add one yourself:</strong> click <em>New appointment</em>, fill in the customer's name and phone, optionally pick a service (this fills in the duration for you), then a date/time and any notes. Click <em>Save appointment</em>.</li>
+    <li><strong>Filter the list:</strong> narrow by status, a customer's phone number, or a date range, then click <em>Filter</em>.</li>
+    <li><strong>Move an appointment forward:</strong> each row shows buttons for the next valid step — e.g. a <em>Pending</em> booking can be <em>Confirmed</em> or <em>Cancelled</em>; a <em>Confirmed</em> one can be <em>Checked in</em>, marked <em>No-show</em>, or <em>Cancelled</em>; a <em>Checked in</em> one can be marked <em>Complete</em>. You only ever see the buttons that make sense for where the appointment currently is.</li>
+  </ul>
+  <p class="field-hint">Cancelled, no-show, and expired appointments stay visible in the list for your records, but they don't count toward a day's total.</p>
+</div>
+
+<div class="panel" id="help-calendar">
+  <h2>Calendar</h2>
+  <p>A month-at-a-glance view of how busy each day is. Use <em>&larr; Previous</em> / <em>Next &rarr;</em> to move between months. Only active appointments (not cancelled, no-show, or expired) are counted in each day's number.</p>
+</div>
+
+<div class="panel" id="help-customers">
+  <h2>Customers</h2>
+  <p>This list isn't something you maintain separately — it's built automatically from your appointment history, one row per phone number.</p>
+  <ul>
+    <li><strong>Search</strong> by name or phone.</li>
+    <li><strong>Sort</strong> by most appointments, most recent visit, or name.</li>
+    <li>Each row shows total appointments, how many were completed, when they first booked, and their last visit.</li>
+  </ul>
+</div>
+
+<div class="panel" id="help-services">
+  <h2>Services</h2>
+  <p>Services are what customers choose when they book through your link. Each one has its own name, duration, and optional description, and can carry its own working-hours schedule (set in Scheduling).</p>
+  <ul>
+    <li><strong>Add a service:</strong> click <em>Add service</em>, enter a name and duration in minutes, an optional description, then <em>Save service</em>.</li>
+    <li><strong>Edit or deactivate:</strong> use the action on a service's row. Deactivating hides it from the public booking page without deleting its history.</li>
+    <li><strong>Show inactive services:</strong> tick the checkbox above the table to see ones you've deactivated.</li>
+  </ul>
+  <p class="field-hint">Adding, editing, or deactivating a service requires the Admin role — Staff and Viewer accounts can see the list but not change it.</p>
+</div>
+
+<div class="panel" id="help-scheduling">
+  <h2>Scheduling</h2>
+  <p>This is where you define what actually becomes a bookable slot on your public page.</p>
+  <ul>
+    <li><strong>Working hours:</strong> pick working days, add one or more time windows per day, then set the slot length, buffer between slots, and how many days ahead customers can book. Apply this as your tenant-wide default, or set a different schedule for an individual service using the <em>Applies to</em> dropdown.</li>
+    <li><strong>Holidays:</strong> add a single date (with an optional reason) to close bookings entirely that day.</li>
+    <li><strong>Blocked times:</strong> a one-off closure with a start and end date/time — for an emergency, an appointment you're taking off the books, or anything shorter than a full holiday.</li>
+    <li><strong>Daily blocked times:</strong> a recurring block that repeats on the days you choose (e.g. a daily lunch break) — no date needed, it just keeps running until you edit, pause, or remove it. Optionally limit it to a date range with <em>+ Only for a date range</em>.</li>
+  </ul>
+  <p class="field-hint">Working hours, holidays, and their deletion require Admin. Staff can add and remove one-off blocked times and daily blocked times; everyone (including Viewer) can see all of the above.</p>
+</div>
+
+<div class="panel" id="help-staff">
+  <h2>Staff &amp; roles</h2>
+  <p>Control who can log in to this desk and what they're allowed to do. There are three roles:</p>
+  <table class="sheet">
+    <thead><tr><th>Role</th><th>Can do</th></tr></thead>
+    <tbody>
+      <tr><td><span class="stamp stamp-role-admin">Admin</span></td><td>Everything — appointments, services, working hours, holidays, staff, and business settings.</td></tr>
+      <tr><td><span class="stamp stamp-role-staff">Staff</span></td><td>Create, update, and cancel appointments; manage one-off and daily blocked times; view everything else. Can't change services, working hours, holidays, staff, or settings.</td></tr>
+      <tr><td><span class="stamp stamp-role-viewer">Viewer</span></td><td>Read-only — can see appointments, customers, services, and schedules, but can't make changes.</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:1rem;"><strong>Invite a staff member:</strong> click <em>Invite staff</em>, enter their email, choose a role, and set a temporary password for them to log in with and change later.</p>
+  <p class="field-hint">Inviting, changing a role, and removing staff all require the Admin role.</p>
+</div>
+
+<div class="panel" id="help-settings">
+  <h2>Business settings</h2>
+  <p>Your business's contact details and how the public booking page behaves.</p>
+  <ul>
+    <li><strong>Business details:</strong> your business name, phone, and timezone. Your booking link's slug is shown here for reference but can't be changed — it's the address of your public link.</li>
+    <li><strong>Booking preferences:</strong> the WhatsApp number customers reach you on, and whether customers can book directly through your public web link (turn this off if you only want bookings to come in via WhatsApp).</li>
+  </ul>
+  <p class="field-hint">Only Admin accounts can open and save this page.</p>
+</div>
+
+<div class="panel" id="help-booking-link">
+  <h2>Your booking link &amp; WhatsApp</h2>
+  <p><em>Booking page</em> in the top bar opens your public link in a new tab — the page you share with customers so they can book themselves, using the working hours and services you've set up.</p>
+  <p>If you've added a WhatsApp number in Business settings, customers can also message that number directly to check availability and book — the same appointments, services, and schedule rules apply either way, so everything shows up together in Appointments.</p>
+</div>
+
+<div class="panel" id="help-faq">
+  <h2>Common questions</h2>
+  <details>
+    <summary>Why can't I edit a service or working hours?</summary>
+    <p>Those actions need the Admin role. Ask a business Admin to make the change, or to change your role in Staff.</p>
+  </details>
+  <details>
+    <summary>A customer says they can't book online — where do I check?</summary>
+    <p>Start in Business settings: is "Allow customers to book online" turned on? Then check Scheduling for a working-hours schedule covering that service and day, and confirm there's no holiday or blocked time covering the slot they want.</p>
+  </details>
+  <details>
+    <summary>An appointment is stuck — I don't see a button to move it forward.</summary>
+    <p>Only the valid next steps for its current status are shown. A cancelled, completed, no-show, or expired appointment is a final state and won't show further action buttons.</p>
+  </details>
+  <details>
+    <summary>Where do cancelled or no-show appointments go?</summary>
+    <p>They stay in the Appointments list for your records — filter by status to isolate them — but they aren't counted in the Calendar's daily totals.</p>
+  </details>
+  <details>
+    <summary>How do I stop a recurring daily block without deleting its history?</summary>
+    <p>Open it from the "Existing daily blocks" table and use its pause/status action instead of removing it outright, or edit its days and time range directly.</p>
+  </details>
+</div>
+{% endblock %}

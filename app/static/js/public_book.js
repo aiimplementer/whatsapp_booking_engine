@@ -23,6 +23,10 @@ const pbEls = {
   tabLookup: document.getElementById('tab-lookup'),
   bookingAppView: document.getElementById('booking-app'),
   lookupView: document.getElementById('lookup-view'),
+  bookingSide: document.getElementById('booking-side'),
+  sideService: document.getElementById('side-service'),
+  sideTime: document.getElementById('side-time'),
+  sideHint: document.getElementById('side-hint'),
 };
 
 /* ---- New booking / Look up switch --------------------------------------- */
@@ -37,6 +41,10 @@ function setMode(mode) {
   pbEls.tabLookup.setAttribute('aria-selected', String(!isNew));
   pbEls.bookingAppView.classList.toggle('hidden', !isNew);
   pbEls.lookupView.classList.toggle('hidden', isNew);
+  // The recap sidebar only means anything for the booking flow — hide it
+  // while looking up/cancelling so that view isn't left with a stale or
+  // pointless "Not selected yet" card beside it.
+  pbEls.bookingSide.classList.toggle('hidden', !isNew);
 }
 pbEls.tabNew.addEventListener('click', () => setMode('new'));
 pbEls.tabLookup.addEventListener('click', () => setMode('lookup'));
@@ -75,6 +83,10 @@ pbEls.serviceList.addEventListener('click', (e) => {
   selectedServiceId = opt.dataset.service;
   pbEls.stepDetails.classList.add('hidden');
   pbEls.stepConfirmation.classList.add('hidden');
+  const svc = services.find((s) => s.id === selectedServiceId);
+  pbEls.sideService.textContent = svc ? svc.name : '—';
+  pbEls.sideTime.textContent = 'Not selected yet';
+  pbEls.sideHint.textContent = 'Now choose a time.';
   loadSlots();
 });
 
@@ -149,6 +161,8 @@ pbEls.slotGrid.addEventListener('click', (e) => {
   const { date, time } = fmtDateTime(selectedSlot.iso);
   const svcName = selectedServiceId ? services.find((s) => s.id === selectedServiceId)?.name : null;
   pbEls.chosenSummary.textContent = `${svcName ? svcName + ' — ' : ''}${date} at ${time} (${selectedSlot.duration} min)`;
+  pbEls.sideTime.textContent = `${date} at ${time}`;
+  pbEls.sideHint.textContent = 'Fill in your details to confirm.';
   pbEls.stepDetails.classList.remove('hidden');
   pbEls.stepConfirmation.classList.add('hidden');
   pbEls.stepDetails.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -176,6 +190,7 @@ pbEls.bookingForm.addEventListener('submit', async (e) => {
     pbEls.stepConfirmation.classList.remove('hidden');
     pbEls.stepConfirmation.scrollIntoView({ behavior: 'smooth', block: 'start' });
     pbEls.bookingForm.reset();
+    pbEls.sideHint.textContent = 'Booked — see your confirmation below.';
     loadSlots();
   } catch (err) {
     showBanner(pbEls.bookingBanner, err.detail || err.message);
@@ -240,6 +255,8 @@ async function init() {
     } else {
       document.getElementById('step-service').classList.add('hidden');
       selectedServiceId = null;
+      pbEls.sideService.textContent = 'Standard appointment';
+      pbEls.sideHint.textContent = 'Now choose a time.';
       loadSlots();
     }
   } catch (err) {

@@ -63,6 +63,11 @@ async def admin_settings(request: Request):
     return templates.TemplateResponse(request, "admin/settings.html", {"active_nav": "settings"})
 
 
+@router.get("/admin/help")
+async def admin_help(request: Request):
+    return templates.TemplateResponse(request, "admin/help.html", {"active_nav": "help"})
+
+
 @router.get("/platform-admin/login")
 async def platform_admin_login(request: Request):
     return templates.TemplateResponse(request, "admin/platform_login.html", {})

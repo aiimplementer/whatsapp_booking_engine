@@ -364,6 +364,20 @@ legend { font-family: var(--font-display); padding: 0 0.4rem; color: var(--blue-
   .settings-form .field-row { flex-direction: column; gap: 0; }
 }
 
+/* ---- help page (FAQ disclosures) ----------------------------------------- */
+
+#help-faq details {
+  border-top: 1px solid var(--rule);
+  padding: 0.65rem 0;
+}
+#help-faq details:first-of-type { border-top: none; }
+#help-faq summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--blue-deep);
+}
+#help-faq details p { margin: 0.5rem 0 0.1rem; color: var(--ink-soft); }
+
 /* ---- panels / ledger rows ------------------------------------------------ */
 
 .panel {
@@ -593,7 +607,7 @@ table.sheet tr:last-child td { border-bottom: none; }
 
 /* ---- public booking page ---------------------------------------------------- */
 
-.booking-wrap { max-width: 680px; margin: 0 auto; padding: 1.5rem 1.25rem 2.5rem; }
+.booking-wrap { max-width: 880px; margin: 0 auto; padding: 1.5rem 1.25rem 2.5rem; }
 .booking-header { margin-bottom: 1rem; }
 .booking-header .biz-name { font-size: 1.5rem; margin-bottom: 0.15rem; }
 .booking-header .muted { font-size: 0.9rem; }
@@ -623,6 +637,36 @@ table.sheet tr:last-child td { border-bottom: none; }
   box-shadow: var(--shadow-card);
 }
 .mode-tab:hover:not(.active) { color: var(--ink); }
+
+.booking-layout { display: grid; grid-template-columns: 1fr; gap: 1.25rem; align-items: start; }
+
+.booking-side { display: none; }
+
+.side-panel { padding: 1.1rem 1.25rem; }
+.side-title {
+  font-family: var(--font-display);
+  color: var(--blue-deep);
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+}
+.side-summary { margin: 0; }
+.side-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+.side-row:last-child { border-bottom: none; }
+.side-row dt { color: var(--ink-soft); font-size: 0.82rem; margin: 0; }
+.side-row dd { margin: 0; font-weight: 600; text-align: right; font-size: 0.88rem; }
+.side-hint { font-size: 0.82rem; margin: 0.75rem 0 0; }
+
+@media (min-width: 860px) {
+  .booking-layout { grid-template-columns: 1fr 260px; }
+  .booking-side { display: block; position: sticky; top: 1.25rem; }
+}
 
 .booking-panel { padding: 1.1rem 1.25rem 1.25rem; }
 .booking-step + .booking-step {

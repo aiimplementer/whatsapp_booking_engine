@@ -18,75 +18,96 @@
       <button type="button" class="mode-tab" id="tab-lookup" role="tab" aria-selected="false">Look up / cancel</button>
     </div>
 
-    <div id="booking-app">
-      <div class="panel booking-panel">
-        <div id="step-service" class="booking-step">
-          <div class="step-label">Step 1 &middot; Service</div>
-          <div class="service-list" id="service-list"></div>
-        </div>
-
-        <div id="step-slots" class="booking-step hidden">
-          <div class="step-label">Step 2 &middot; Time</div>
-          <div class="day-tabs" id="day-tabs"></div>
-          <div class="slot-grid" id="slot-grid"></div>
-          <div id="no-slots" class="muted hidden">No times available on this day — try another.</div>
-        </div>
-
-        <div id="step-details" class="booking-step hidden">
-          <div class="step-label">Step 3 &middot; Your details</div>
-          <div id="booking-banner" class="banner banner-error" hidden></div>
-          <p class="muted" id="chosen-slot-summary"></p>
-          <form id="booking-form">
-            <div class="field-row">
-              <div class="field">
-                <label for="b-name">Full name</label>
-                <input type="text" id="b-name" required maxlength="150" />
-              </div>
-              <div class="field">
-                <label for="b-phone">Phone</label>
-                <input type="tel" id="b-phone" required placeholder="+919876543210" />
-              </div>
+    <div class="booking-layout">
+      <div class="booking-main">
+        <div id="booking-app">
+          <div class="panel booking-panel">
+            <div id="step-service" class="booking-step">
+              <div class="step-label">Step 1 &middot; Service</div>
+              <div class="service-list" id="service-list"></div>
             </div>
-            <div class="field-row">
-              <div class="field">
-                <label for="b-email">Email (optional)</label>
-                <input type="email" id="b-email" />
-              </div>
-              <div class="field">
-                <label for="b-notes">Notes (optional)</label>
-                <input type="text" id="b-notes" maxlength="500" />
-              </div>
+
+            <div id="step-slots" class="booking-step hidden">
+              <div class="step-label">Step 2 &middot; Time</div>
+              <div class="day-tabs" id="day-tabs"></div>
+              <div class="slot-grid" id="slot-grid"></div>
+              <div id="no-slots" class="muted hidden">No times available on this day — try another.</div>
             </div>
-            <button class="btn btn-block" type="submit" id="b-submit">Confirm booking</button>
-          </form>
+
+            <div id="step-details" class="booking-step hidden">
+              <div class="step-label">Step 3 &middot; Your details</div>
+              <div id="booking-banner" class="banner banner-error" hidden></div>
+              <p class="muted" id="chosen-slot-summary"></p>
+              <form id="booking-form">
+                <div class="field-row">
+                  <div class="field">
+                    <label for="b-name">Full name</label>
+                    <input type="text" id="b-name" required maxlength="150" />
+                  </div>
+                  <div class="field">
+                    <label for="b-phone">Phone</label>
+                    <input type="tel" id="b-phone" required placeholder="+919876543210" />
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field">
+                    <label for="b-email">Email (optional)</label>
+                    <input type="email" id="b-email" />
+                  </div>
+                  <div class="field">
+                    <label for="b-notes">Notes (optional)</label>
+                    <input type="text" id="b-notes" maxlength="500" />
+                  </div>
+                </div>
+                <button class="btn btn-block" type="submit" id="b-submit">Confirm booking</button>
+              </form>
+            </div>
+          </div>
+
+          <div id="step-confirmation" class="hidden confirmation-card">
+            <h3>You're booked</h3>
+            <div class="ref" id="conf-ref"></div>
+            <p id="conf-when"></p>
+            <p class="muted">Keep your reference and phone number — you'll need both to look up or cancel this booking.</p>
+          </div>
+        </div>
+
+        <div id="lookup-view" class="hidden">
+          <div class="panel lookup-panel">
+            <form id="lookup-form" class="field-row">
+              <div class="field">
+                <label for="l-ref">Booking reference</label>
+                <input type="text" id="l-ref" placeholder="APT-XXXXXXXX" required />
+              </div>
+              <div class="field">
+                <label for="l-phone">Phone used to book</label>
+                <input type="tel" id="l-phone" required placeholder="+919876543210" />
+              </div>
+              <div class="field" style="align-self:flex-end; flex:0;">
+                <button class="btn btn-secondary" type="submit">Look up</button>
+              </div>
+            </form>
+            <div id="lookup-result" style="margin-top: 0.85rem;"></div>
+          </div>
         </div>
       </div>
 
-      <div id="step-confirmation" class="hidden confirmation-card">
-        <h3>You're booked</h3>
-        <div class="ref" id="conf-ref"></div>
-        <p id="conf-when"></p>
-        <p class="muted">Keep your reference and phone number — you'll need both to look up or cancel this booking.</p>
-      </div>
-    </div>
-
-    <div id="lookup-view" class="hidden">
-      <div class="panel lookup-panel">
-        <form id="lookup-form" class="field-row">
-          <div class="field">
-            <label for="l-ref">Booking reference</label>
-            <input type="text" id="l-ref" placeholder="APT-XXXXXXXX" required />
-          </div>
-          <div class="field">
-            <label for="l-phone">Phone used to book</label>
-            <input type="tel" id="l-phone" required placeholder="+919876543210" />
-          </div>
-          <div class="field" style="align-self:flex-end; flex:0;">
-            <button class="btn btn-secondary" type="submit">Look up</button>
-          </div>
-        </form>
-        <div id="lookup-result" style="margin-top: 0.85rem;"></div>
-      </div>
+      <aside class="booking-side" id="booking-side">
+        <div class="panel side-panel">
+          <div class="side-title">Your booking</div>
+          <dl class="side-summary">
+            <div class="side-row">
+              <dt>Service</dt>
+              <dd id="side-service">Not selected yet</dd>
+            </div>
+            <div class="side-row">
+              <dt>Date &amp; time</dt>
+              <dd id="side-time">Not selected yet</dd>
+            </div>
+          </dl>
+          <p class="muted side-hint" id="side-hint">Pick a service to get started.</p>
+        </div>
+      </aside>
     </div>
   </div>
 </div>
