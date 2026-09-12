@@ -11,9 +11,13 @@
       double-bookings, no back-and-forth.
     </p>
     <div class="cta-row">
-      <a class="btn" href="/admin/signup">Set up your business</a>
-      <a class="btn btn-secondary" href="/admin/login">I already have an account</a>
+      <a class="btn" href="/admin/login">I already have an account</a>
     </div>
+    <form id="try-form" class="try-booking-inline" onsubmit="event.preventDefault(); go();">
+      <span class="muted">Have a business slug? Jump to its booking page:</span>
+      <input type="text" id="slug-input" placeholder="business-slug" />
+      <button class="btn btn-small" type="submit">Open</button>
+    </form>
   </section>
 
   <section class="feature-grid">
@@ -32,16 +36,6 @@
       <p class="muted">Confirm, check in, and close out appointments from a plain
       list sorted by time — built for a busy front desk, not a spreadsheet.</p>
     </div>
-  </section>
-
-  <section class="panel narrow" style="margin: 0 auto 2rem;">
-    <h3>Try the customer booking page</h3>
-    <p class="muted" style="margin-bottom: 0.85rem;">Have a business slug already?
-    Jump straight to its public booking page.</p>
-    <form id="try-form" class="row" onsubmit="event.preventDefault(); go();">
-      <input type="text" id="slug-input" placeholder="business-slug" style="flex:1; min-width: 180px;" />
-      <button class="btn" type="submit">Open booking page</button>
-    </form>
   </section>
 </div>
 {% endblock %}
