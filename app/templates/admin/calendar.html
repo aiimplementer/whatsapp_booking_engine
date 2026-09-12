@@ -1,0 +1,24 @@
+{% extends "admin/_shell.html" %}
+{% block title %}Calendar — Slotbook{% endblock %}
+{% block admin_content %}
+<div class="page-head">
+  <div>
+    <h1>Calendar</h1>
+    <p class="lede">Active appointments per day — cancelled, no-show, and expired aren't counted.</p>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="spread month-nav">
+    <button class="btn btn-secondary btn-small" id="cal-prev" type="button">&larr; Previous</button>
+    <h2 id="cal-month-label">&nbsp;</h2>
+    <button class="btn btn-secondary btn-small" id="cal-next" type="button">Next &rarr;</button>
+  </div>
+
+  <div id="cal-skeleton" class="skeleton">Loading…</div>
+  <div id="cal-grid" class="month-grid hidden"></div>
+</div>
+{% endblock %}
+{% block admin_scripts %}
+<script src="/static/js/admin_calendar.js"></script>
+{% endblock %}

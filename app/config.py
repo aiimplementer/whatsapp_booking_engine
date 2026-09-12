@@ -28,6 +28,15 @@ class Settings(BaseSettings):
     whatsapp_access_token: str = ""
     whatsapp_api_version: str = "v21.0"
 
+    # --- Platform admin console (/platform-admin) ---
+    # Single shared operator account, deliberately nominal (HTTP Basic, no
+    # sessions/roles/DB table) — this console is for the SaaS operator, not
+    # tenants, and isn't meant to grow beyond one or two trusted people.
+    # Generate the hash with:
+    #   python -c "from app.security import hash_password; print(hash_password('yourpassword'))"
+    platform_admin_username: str = "platform-admin"
+    platform_admin_password_hash: str = ""
+
 
 
 settings = Settings()

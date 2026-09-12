@@ -52,7 +52,7 @@ els.serviceSelect.addEventListener('change', () => {
 });
 
 function renderRow(a) {
-  const { date, time } = fmtDateTime(a.scheduled_at);
+  const { time } = fmtDateTime(a.scheduled_at);
   const actions = (NEXT_ACTIONS[a.status] || [])
     .map(
       (t) =>
@@ -63,7 +63,7 @@ function renderRow(a) {
   const notes = a.notes ? `<div class="meta">${escapeHtml(a.notes)}</div>` : '';
   return `
     <div class="ledger-row" data-row="${a.id}">
-      <div class="slot-time"><span class="date-part">${date}</span>${time}</div>
+      <div class="slot-time">${time}</div>
       <div>
         <div class="who">${escapeHtml(a.customer_name)}</div>
         <div class="meta">${escapeHtml(a.customer_phone)}${email} · <span class="mono">${a.booking_ref}</span> · ${a.duration_minutes} min</div>
@@ -74,6 +74,56 @@ function renderRow(a) {
         ${actions}
       </div>
     </div>`;
+}
+
+// Groups appointments (already sorted by scheduled_at from the API) into
+// day buckets in the viewer's local timezone, so the list reads like pages
+// in a diary — one date header per day — instead of one long flat run
+// where you have to read every row's small date label to tell days apart.
+function groupByDate(appts) {
+  const groups = [];
+  let currentKey = null;
+  for (const a of appts) {
+    const d = new Date(a.scheduled_at);
+    const key = d.toDateString();
+    if (key !== currentKey) {
+      currentKey = key;
+      groups.push({ date: d, items: [] });
+    }
+    groups[groups.length - 1].items.push(a);
+  }
+  return groups;
+}
+
+function dateHeaderLabel(d) {
+  const startOfDay = (x) => { const c = new Date(x); c.setHours(0, 0, 0, 0); return c; };
+  const diffDays = Math.round((startOfDay(d) - startOfDay(new Date())) / 86400000);
+  const full = d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  if (diffDays === 0) return `Today · ${full}`;
+  if (diffDays === 1) return `Tomorrow · ${full}`;
+  if (diffDays === -1) return `Yesterday · ${full}`;
+  return full;
+}
+
+// Cancelled/no-show/expired appointments still show up in the list (staff
+// need to see them), but they're not really "on the books" for the day —
+// counting them in the day header would overstate how much is actually
+// happening that day.
+const INACTIVE_STATUSES = new Set(['CANCELLED', 'NO_SHOW', 'EXPIRED']);
+
+function renderLedger(appts) {
+  return groupByDate(appts)
+    .map((g) => {
+      const count = g.items.filter((a) => !INACTIVE_STATUSES.has(a.status)).length;
+      return `
+        <div class="ledger-date-header">
+          <span>${dateHeaderLabel(g.date)}</span>
+          <span class="muted">${count} appointment${count === 1 ? "" : "s"}</span>
+        </div>
+        ${g.items.map(renderRow).join("")}
+      `;
+    })
+    .join("");
 }
 
 async function loadAppointments() {
@@ -98,7 +148,7 @@ async function loadAppointments() {
       els.empty.hidden = false;
       return;
     }
-    els.ledger.innerHTML = appts.map(renderRow).join('');
+    els.ledger.innerHTML = renderLedger(appts);
     els.ledger.hidden = false;
   } catch (err) {
     els.skeleton.hidden = true;
@@ -163,6 +213,21 @@ els.newForm.addEventListener('submit', async (e) => {
     submitBtn.disabled = false;
   }
 });
+
+// A calendar-page day cell (see admin_calendar.js) links here with
+// ?date=YYYY-MM-DD, and a customers-page row links here with ?phone=... —
+// pre-fill and apply the matching filter so the click actually lands on the
+// relevant appointments instead of the full list.
+const presetParams = new URLSearchParams(window.location.search);
+const presetDate = presetParams.get('date');
+const presetPhone = presetParams.get('phone');
+if (presetDate) {
+  document.getElementById('f-from').value = presetDate;
+  document.getElementById('f-to').value = presetDate;
+}
+if (presetPhone) {
+  document.getElementById('f-phone').value = presetPhone;
+}
 
 loadServiceOptions();
 loadAppointments();

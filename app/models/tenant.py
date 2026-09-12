@@ -36,6 +36,13 @@ class Tenant(UUIDPKMixin, TimestampMixin, Base):
     subscription_tier: Mapped[str] = mapped_column(subscription_tier_enum, default="free")
     whatsapp_number: Mapped[str | None] = mapped_column(String(20), unique=True)
     web_booking_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Platform-operator kill switch, deliberately separate from `status`:
+    # `status` (trial/active/inactive/suspended) is the tenant/product lifecycle
+    # state, whereas this is purely "is their subscription/billing current" as
+    # toggled from the platform admin console. Keeping them apart means billing
+    # ops never has to reason about (or accidentally clobber) product-status
+    # transitions, and vice versa.
+    subscription_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     branding: Mapped[dict] = mapped_column(JSONB, default=dict)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 

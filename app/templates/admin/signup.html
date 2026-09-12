@@ -87,6 +87,7 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
       tenant_slug: body.tenant_slug,
       tenant_name: body.business_name,
       role: 'admin',
+      email: body.admin_email,
     });
     window.location.href = '/admin';
   } catch (err) {

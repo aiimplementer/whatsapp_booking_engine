@@ -6,6 +6,8 @@
    Concept: a day-planner / appointment ledger, not a SaaS card grid — time is
    the primary axis, rows read like ruled lines in a diary, status reads like
    a stamp rather than a pill.
+   Fonts load from Google Fonts, linked in base.html <head> — Fraunces
+   (display serif) is a variable font, so weight 400-700 comes from one file.
    ========================================================================= */
 
 :root {
@@ -34,11 +36,6 @@
   --radius-sm: 3px;
   --radius-md: 6px;
   --shadow-card: 0 1px 0 var(--rule), 0 8px 20px -16px rgba(28, 37, 33, 0.35);
-}
-
-@font-face {
-  font-family: "Fraunces";
-  src: local("Georgia");
 }
 
 * { box-sizing: border-box; }
@@ -125,12 +122,17 @@ a.quiet { color: inherit; text-decoration: none; }
 }
 
 .masthead nav { display: flex; gap: 1.25rem; align-items: baseline; }
-.masthead nav a {
+.masthead nav a:not(.btn) {
   color: var(--ink-soft);
   text-decoration: none;
   font-size: 0.95rem;
 }
-.masthead nav a:hover { color: var(--teal); }
+.masthead nav a:not(.btn):hover { color: var(--teal); }
+.masthead nav a.nav-secondary {
+  color: var(--teal-deep);
+  font-weight: 600;
+}
+.masthead nav a.nav-secondary:hover { color: var(--teal); }
 
 /* ---- app shell (admin) -------------------------------------------------- */
 
@@ -180,6 +182,23 @@ a.quiet { color: inherit; text-decoration: none; }
   background: var(--paper-raised);
   font-weight: 600;
 }
+
+.sidebar-user {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+}
+.sidebar-user .user-email {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+.sidebar-user a {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+.sidebar-user a:hover { color: var(--teal); }
 
 .app-main { padding: 1.75rem 0 3rem 1.75rem; }
 
@@ -282,9 +301,23 @@ legend { font-family: var(--font-display); padding: 0 0.4rem; color: var(--teal-
 }
 
 .ledger { border-top: 1px solid var(--rule-strong); }
+.ledger-date-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 1rem 0 0.4rem;
+  border-top: 2px solid var(--rule-strong);
+  font-family: var(--font-display);
+  color: var(--teal-deep);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.ledger-date-header:first-child { border-top: none; padding-top: 0; }
+.ledger-date-header .muted { font-family: var(--font-body); font-size: 0.8rem; font-weight: 400; white-space: nowrap; }
 .ledger-row {
   display: grid;
-  grid-template-columns: 92px 1fr auto;
+  grid-template-columns: 76px 1fr auto;
   gap: 1rem;
   align-items: center;
   padding: 0.75rem 0;
@@ -296,7 +329,6 @@ legend { font-family: var(--font-display); padding: 0 0.4rem; color: var(--teal-
   color: var(--teal-deep);
   white-space: nowrap;
 }
-.ledger-row .slot-time .date-part { display: block; color: var(--ink-soft); font-size: 0.72rem; }
 .ledger-row .who { font-weight: 600; }
 .ledger-row .meta { color: var(--ink-soft); font-size: 0.85rem; }
 .ledger-row .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
@@ -328,6 +360,19 @@ legend { font-family: var(--font-display); padding: 0 0.4rem; color: var(--teal-
 .stamp-rescheduled{ background: var(--amber-soft); color: #6e4a10; border-color: #d9ae5f; }
 .stamp-no_show   { background: var(--coral-soft); color: #7a291f; border-color: #d79086; }
 .stamp-expired   { background: #e4e7df; color: #45503f; border-color: #b7bfab; }
+
+/* Platform admin console: tenant lifecycle status + subscription toggle */
+.stamp-trial     { background: var(--slate-soft); color: #2c4250; border-color: #9db0bc; }
+.stamp-active    { background: var(--sage-soft);  color: #2c4a35; border-color: #8fae9a; }
+.stamp-inactive  { background: #e4e7df; color: #45503f; border-color: #b7bfab; }
+.stamp-suspended { background: var(--coral-soft); color: #7a291f; border-color: #d79086; }
+.stamp-enabled   { background: var(--sage-soft);  color: #2c4a35; border-color: #8fae9a; }
+.stamp-disabled  { background: var(--coral-soft); color: #7a291f; border-color: #d79086; }
+
+/* Sidebar: signed-in user's role */
+.stamp-role-admin  { background: var(--sage-soft);  color: #2c4a35; border-color: #8fae9a; }
+.stamp-role-staff  { background: var(--slate-soft); color: #2c4250; border-color: #9db0bc; }
+.stamp-role-viewer { background: var(--amber-soft); color: #6e4a10; border-color: #d9ae5f; }
 
 /* ---- toasts / banners ------------------------------------------------------ */
 
@@ -405,11 +450,11 @@ table.sheet tr:last-child td { border-bottom: none; }
   margin: 2.5rem 0;
 }
 .feature-grid .feature {
-  padding: 1.5rem;
+  padding: 1.75rem 1.5rem;
   border-right: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
 }
-.feature .num { font-family: var(--font-mono); color: var(--amber); font-size: 0.8rem; }
+.feature h3 { margin-bottom: 0.5rem; }
 
 /* ---- auth cards ------------------------------------------------------------ */
 
@@ -490,6 +535,51 @@ table.sheet tr:last-child td { border-bottom: none; }
   margin: 0.4rem 0 0.8rem;
 }
 
+/* ---- monthly calendar page --------------------------------------------- */
+
+.month-nav { margin-bottom: 1.25rem; }
+.month-nav h2 { margin: 0; font-size: 1.15rem; }
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-top: 1px solid var(--rule);
+  border-left: 1px solid var(--rule);
+}
+.month-weekday {
+  padding: 0.5rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  border-right: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule-strong);
+}
+.month-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 78px;
+  padding: 0.5rem;
+  border-right: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  text-decoration: none;
+  color: var(--ink);
+}
+.month-day:hover { background: var(--paper); }
+.month-day-empty { cursor: default; }
+.month-day-empty:hover { background: transparent; }
+.month-day-num { font-family: var(--font-display); font-weight: 600; }
+.month-day.is-today .month-day-num {
+  color: var(--teal-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.month-day.is-empty .month-day-num { color: var(--ink-soft); }
+.month-day-count { font-size: 0.7rem; }
+
 /* ---- utility --------------------------------------------------------------- */
 
 .muted { color: var(--ink-soft); }
@@ -509,6 +599,8 @@ table.sheet tr:last-child td { border-bottom: none; }
   .feature-grid { grid-template-columns: 1fr; }
   .ledger-row { grid-template-columns: 1fr; }
   .ledger-row .actions { justify-content: flex-start; }
+  .month-day { min-height: 52px; padding: 0.3rem; }
+  .month-weekday { font-size: 0.62rem; padding: 0.3rem; }
 }
 
 :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }

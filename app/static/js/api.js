@@ -8,23 +8,26 @@ const Api = (() => {
   const TENANT_SLUG_KEY = "wb_tenant_slug";
   const TENANT_NAME_KEY = "wb_tenant_name";
   const ROLE_KEY = "wb_role";
+  const EMAIL_KEY = "wb_email";
 
   function getAccessToken() { return localStorage.getItem(ACCESS_KEY); }
   function getRefreshToken() { return localStorage.getItem(REFRESH_KEY); }
   function getTenantSlug() { return localStorage.getItem(TENANT_SLUG_KEY) || ""; }
   function getTenantName() { return localStorage.getItem(TENANT_NAME_KEY) || ""; }
   function getRole() { return localStorage.getItem(ROLE_KEY) || ""; }
+  function getEmail() { return localStorage.getItem(EMAIL_KEY) || ""; }
 
-  function setSession({ access_token, refresh_token, tenant_slug, tenant_name, role }) {
+  function setSession({ access_token, refresh_token, tenant_slug, tenant_name, role, email }) {
     if (access_token) localStorage.setItem(ACCESS_KEY, access_token);
     if (refresh_token) localStorage.setItem(REFRESH_KEY, refresh_token);
     if (tenant_slug) localStorage.setItem(TENANT_SLUG_KEY, tenant_slug);
     if (tenant_name) localStorage.setItem(TENANT_NAME_KEY, tenant_name);
     if (role) localStorage.setItem(ROLE_KEY, role);
+    if (email) localStorage.setItem(EMAIL_KEY, email);
   }
 
   function clearSession() {
-    [ACCESS_KEY, REFRESH_KEY, TENANT_SLUG_KEY, TENANT_NAME_KEY, ROLE_KEY].forEach((k) =>
+    [ACCESS_KEY, REFRESH_KEY, TENANT_SLUG_KEY, TENANT_NAME_KEY, ROLE_KEY, EMAIL_KEY].forEach((k) =>
       localStorage.removeItem(k)
     );
   }
@@ -107,7 +110,7 @@ const Api = (() => {
   const del = (path) => request(path, { method: "DELETE" });
 
   return {
-    getAccessToken, getRefreshToken, getTenantSlug, getTenantName, getRole,
+    getAccessToken, getRefreshToken, getTenantSlug, getTenantName, getRole, getEmail,
     setSession, clearSession, isLoggedIn, requireAuth,
     request, get, post, patch, put, del,
   };

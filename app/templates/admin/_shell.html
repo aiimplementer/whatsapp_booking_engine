@@ -2,7 +2,6 @@
 {% block nav %}
 <nav>
   <a href="#" id="nav-booking-link">Booking page</a>
-  <a href="#" id="nav-logout">Log out</a>
 </nav>
 {% endblock %}
 {% block bodyclass %}no-ruling{% endblock %}
@@ -13,11 +12,21 @@
     <span class="tenant-slug" id="sidebar-tenant-slug">&nbsp;</span>
     <ul class="side-nav">
       <li><a href="/admin" data-nav="dashboard">Appointments</a></li>
+      <li><a href="/admin/calendar" data-nav="calendar">Calendar</a></li>
+      <li><a href="/admin/customers" data-nav="customers">Customers</a></li>
       <li><a href="/admin/services" data-nav="services">Services</a></li>
       <li><a href="/admin/scheduling" data-nav="scheduling">Scheduling</a></li>
       <li><a href="/admin/staff" data-nav="staff">Staff</a></li>
       <li><a href="/admin/settings" data-nav="settings">Business settings</a></li>
     </ul>
+
+    <div class="sidebar-user">
+      <span class="user-email" id="sidebar-user-email">&nbsp;</span>
+      <div class="row" style="gap: 0.6rem; margin-top: 0.35rem;">
+        <span class="stamp" id="sidebar-user-role"></span>
+        <a href="#" id="nav-logout" class="quiet">Log out</a>
+      </div>
+    </div>
   </aside>
   <div class="app-main">
     {% block admin_content %}{% endblock %}
@@ -29,6 +38,23 @@
   if (!Api.requireAuth()) { /* redirected */ }
   document.getElementById('sidebar-tenant-name').textContent = Api.getTenantName() || 'Your business';
   document.getElementById('sidebar-tenant-slug').textContent = Api.getTenantSlug() ? '/' + Api.getTenantSlug() : '';
+  document.getElementById('sidebar-user-email').textContent = Api.getEmail() || '';
+  const roleEl = document.getElementById('sidebar-user-role');
+  function renderRole(role) {
+    role = (role || '').toLowerCase();
+    if (!role) return;
+    roleEl.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+    roleEl.className = `stamp stamp-role-${role}`;
+  }
+  renderRole(Api.getRole());
+  // Re-fetch rather than trust only the cached session value — keeps this
+  // correct for sessions logged in before email/role were cached here, and
+  // reflects a role change made elsewhere without waiting for a re-login.
+  Api.get('/api/v1/auth/me').then((me) => {
+    Api.setSession({ role: me.role, email: me.email });
+    document.getElementById('sidebar-user-email').textContent = me.email;
+    renderRole(me.role);
+  }).catch(() => { /* keep whatever was cached */ });
   const bookingLink = document.getElementById('nav-booking-link');
   if (bookingLink && Api.getTenantSlug()) {
     bookingLink.href = `/book/${Api.getTenantSlug()}`;

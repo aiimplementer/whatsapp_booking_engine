@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Platform admin — Slotbook{% endblock %}
+{% block bodyclass %}no-ruling{% endblock %}
+{% block nav %}
+<nav>
+  <span class="muted">Platform admin</span>
+</nav>
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-head">
+    <div>
+      <h1>Tenants</h1>
+      <p class="lede">Every business on Slotbook, across all subscription tiers.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="spread" style="margin-bottom: 1rem;">
+      <div class="field" style="margin-bottom: 0; min-width: 280px;">
+        <label for="tenant-search">Search</label>
+        <input type="text" id="tenant-search" placeholder="Business name, email, or slug" />
+      </div>
+      <div class="row">
+        <span class="muted" id="result-count"></span>
+      </div>
+    </div>
+
+    <div id="banner" class="banner banner-error" hidden></div>
+    <div id="tenants-skeleton" class="skeleton">Loading tenants…</div>
+
+    <table class="sheet hidden" id="tenants-table">
+      <thead>
+        <tr>
+          <th>Business name</th>
+          <th>Business email</th>
+          <th>Timezone</th>
+          <th>Admin login email</th>
+          <th>Web booking</th>
+          <th>Status</th>
+          <th>Subscription</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tenants-tbody"></tbody>
+    </table>
+
+    <div class="row" id="pagination" style="justify-content: center; margin-top: 1.25rem;"></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/admin_platform_console.js"></script>
+{% endblock %}

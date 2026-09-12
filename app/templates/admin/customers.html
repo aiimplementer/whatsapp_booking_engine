@@ -1,0 +1,50 @@
+{% extends "admin/_shell.html" %}
+{% block title %}Customers — Slotbook{% endblock %}
+{% block admin_content %}
+<div class="page-head">
+  <div>
+    <h1>Customers</h1>
+    <p class="lede">Built from your appointment history — one row per phone number, not a separate list you maintain.</p>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="spread" style="margin-bottom: 1rem;">
+    <div class="field" style="margin-bottom: 0; min-width: 260px;">
+      <label for="cust-search">Search</label>
+      <input type="text" id="cust-search" placeholder="Name or phone" />
+    </div>
+    <div class="field" style="margin-bottom: 0; min-width: 180px;">
+      <label for="cust-sort">Sort by</label>
+      <select id="cust-sort">
+        <option value="visits">Most appointments</option>
+        <option value="recent">Most recent visit</option>
+        <option value="name">Name</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="skeleton" class="skeleton">Loading customers…</div>
+  <table class="sheet hidden" id="cust-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Total appointments</th>
+        <th>Completed</th>
+        <th>Last visit</th>
+      </tr>
+    </thead>
+    <tbody id="cust-tbody"></tbody>
+  </table>
+  <div class="empty-state hidden" id="empty">
+    <h3>No customers yet</h3>
+    <p>Once appointments start coming in, they'll show up here grouped by phone number.</p>
+  </div>
+
+  <div class="row" id="pagination" style="justify-content: center; margin-top: 1.25rem;"></div>
+</div>
+{% endblock %}
+{% block admin_scripts %}
+<script src="/static/js/admin_customers.js"></script>
+{% endblock %}
