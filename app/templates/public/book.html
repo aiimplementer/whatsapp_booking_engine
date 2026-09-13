@@ -30,7 +30,11 @@
 
             <div id="step-slots" class="booking-step hidden">
               <div class="step-label">Step 2 &middot; Time</div>
-              <div class="day-tabs" id="day-tabs"></div>
+              <div class="day-tabs-wrap">
+                <button type="button" class="day-tabs-nav day-tabs-prev" id="day-tabs-prev" aria-label="Show earlier days">&lsaquo;</button>
+                <div class="day-tabs" id="day-tabs"></div>
+                <button type="button" class="day-tabs-nav day-tabs-next" id="day-tabs-next" aria-label="Show later days">&rsaquo;</button>
+              </div>
               <div class="slot-grid" id="slot-grid"></div>
               <div id="no-slots" class="muted hidden">No times available on this day — try another.</div>
             </div>
@@ -118,4 +122,43 @@
 {% endblock %}
 {% block scripts %}
 <script src="/static/js/public_book.js"></script>
+<script>
+// Desktop prev/next arrows for the day-tabs strip. Self-contained: doesn't
+// touch public_book.js or how days/slots get rendered, it just scrolls the
+// existing #day-tabs element and reflects when it's at either end.
+(function () {
+  var wrap = document.getElementById('day-tabs');
+  var prevBtn = document.getElementById('day-tabs-prev');
+  var nextBtn = document.getElementById('day-tabs-next');
+  if (!wrap || !prevBtn || !nextBtn) return;
+
+  function scrollByAmount(dir) {
+    // Scroll by ~85% of the visible width so the edge tab stays partially
+    // in view as a "there's more" cue, rather than jumping a full page.
+    wrap.scrollBy({ left: dir * wrap.clientWidth * 0.85, behavior: 'smooth' });
+  }
+
+  function refreshButtons() {
+    var maxScroll = wrap.scrollWidth - wrap.clientWidth;
+    var atStart = wrap.scrollLeft <= 1;
+    var atEnd = wrap.scrollLeft >= maxScroll - 1;
+    // If there's nothing to scroll at all, disable both rather than
+    // showing two dead-looking-but-enabled buttons.
+    var noOverflow = maxScroll <= 1;
+    prevBtn.disabled = atStart || noOverflow;
+    nextBtn.disabled = atEnd || noOverflow;
+  }
+
+  prevBtn.addEventListener('click', function () { scrollByAmount(-1); });
+  nextBtn.addEventListener('click', function () { scrollByAmount(1); });
+  wrap.addEventListener('scroll', refreshButtons, { passive: true });
+  window.addEventListener('resize', refreshButtons);
+
+  // Day tabs are populated dynamically (and can change when the user picks
+  // a different service), so watch for that instead of running once.
+  new MutationObserver(refreshButtons).observe(wrap, { childList: true });
+
+  refreshButtons();
+})();
+</script>
 {% endblock %}

@@ -689,6 +689,47 @@ table.sheet tr:last-child td { border-bottom: none; }
 .service-option .dur { font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-soft); flex-shrink: 0; }
 
 /* ---- Day tabs with improved mobile handling -------------------------------- */
+
+/* Wraps the scrollable day-tabs strip with prev/next arrow buttons.
+   On touch devices the buttons are hidden (swipe is the natural gesture
+   and is already discoverable); on desktop, where a hidden scrollbar
+   gives no clue that more days exist, the arrows make it obvious there's
+   more to see and let mouse/trackpad users get to it with a click. */
+.day-tabs-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.day-tabs-nav {
+  flex: 0 0 auto;
+  display: none; /* shown only on non-touch/desktop widths below */
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 50%;
+  background: var(--paper-raised);
+  color: var(--blue-deep);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+}
+.day-tabs-nav:hover { border-color: var(--blue); color: var(--blue); }
+.day-tabs-nav:disabled {
+  opacity: 0.35;
+  cursor: default;
+  color: var(--ink-soft);
+}
+.day-tabs-nav:disabled:hover { border-color: var(--rule-strong); }
+
+@media (min-width: 640px) {
+  .day-tabs-nav { display: inline-flex; }
+}
+
 .day-tabs { 
   display: flex; 
   gap: 0.35rem; 
@@ -696,8 +737,10 @@ table.sheet tr:last-child td { border-bottom: none; }
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 0.4rem; 
-  margin-bottom: 0.75rem;
   scroll-snap-type: x mandatory;
+  flex: 1 1 auto;
+  min-width: 0; /* flex item — same grid-blowout guard as .booking-main */
+  scroll-behavior: smooth;
 }
 
 /* Hide scrollbar but keep scrolling functional */
@@ -889,6 +932,58 @@ table.sheet tr:last-child td { border-bottom: none; }
      style for a nice side-by-side layout on desktop; on the narrowest
      phones that would push them wider than the screen, so drop it here. */
   .field { min-width: 0 !important; }
+}
+
+/* ---- public site footer ------------------------------------------------ */
+/* Was entirely unstyled — the logo had nothing capping its size, so it
+   rendered at native resolution instead of as a small wordmark. */
+
+.site-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  max-width: 1120px;
+  margin: 2rem auto 0;
+  padding: 1.25rem 1.5rem 2rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.footer-note { color: inherit; }
+.footer-link { color: var(--blue); text-decoration: none; }
+.footer-link:hover { text-decoration: underline; }
+
+.powered-by {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: inherit;
+  text-decoration: none;
+  margin-left: auto; /* pins it to the right on wide screens */
+}
+.powered-by:hover { color: var(--ink); }
+
+/* The fix: an explicit height (not a %, which can't resolve sensibly
+   against a shrink-to-fit flex/inline container) plus width:auto to keep
+   the logo's aspect ratio, on both mobile and desktop. */
+.powered-by img {
+  height: 18px;
+  width: auto;
+  display: block;
+}
+
+@media (max-width: 480px) {
+  .site-footer {
+    padding: 1rem 1rem 1.5rem;
+    font-size: 0.8rem;
+  }
+  .powered-by {
+    margin-left: 0; /* no room to float it right on a narrow row */
+    flex-basis: 100%;
+  }
+  .powered-by img { height: 16px; }
 }
 
 :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
