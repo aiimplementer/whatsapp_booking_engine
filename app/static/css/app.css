@@ -238,7 +238,12 @@ a.quiet { color: inherit; text-decoration: none; }
 .sidebar-footer .powered-by {
   font-size: 0.8rem;
 }
-.sidebar-footer .powered-by img { height: 20px; }
+/* Height tuned for the cropped ai-implementer-logo-compact.png, which has
+   a much wider aspect ratio (~11:1) than the original full banner image
+   (~4:1) since the transparent padding around the wordmark was trimmed.
+   Using the old 20px here would render it nearly as wide as the sidebar
+   itself. */
+.sidebar-footer .powered-by img { height: 16px; width: auto; }
 
 .app-sidebar .tenant-name {
   font-family: var(--font-display);
