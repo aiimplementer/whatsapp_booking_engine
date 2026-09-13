@@ -594,7 +594,20 @@ table.sheet tr:last-child td { border-bottom: none; }
   align-items: start;
 }
 
-.booking-side { display: none; }
+/* .booking-main is a grid item with no explicit width/min-width, so by
+   default browsers give it an "automatic minimum size" equal to the
+   min-content size of everything inside it — including the day-tabs row,
+   which is a nowrap flex list. That min-content width (7 day pills) is
+   wider than a phone screen, so the grid TRACK itself is stretched to fit
+   it, pushing .booking-main (and everything in it) past the viewport
+   edge. body{overflow-x:hidden} then just clips the excess instead of
+   letting .day-tabs scroll internally like it's supposed to — this is the
+   cut-off-content bug in the screenshot. min-width: 0 caps the grid
+   item at its track size so the nested overflow-x:auto scrollers can do
+   their job. */
+.booking-main { min-width: 0; }
+
+.booking-side { display: none; min-width: 0; }
 
 .side-panel { padding: 1.1rem 1.25rem; }
 .side-title {
