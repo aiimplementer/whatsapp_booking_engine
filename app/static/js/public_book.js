@@ -195,7 +195,7 @@ pbEls.bookingForm.addEventListener('submit', async (e) => {
     pbEls.confRef.textContent = booking.booking_ref;
     const { date, time } = fmtDateTime(booking.scheduled_at);
     pbEls.confWhen.textContent = `${date} at ${time} — ${statusLabel(booking.status)}`;
-    pbEls.confDetails.textContent = `${booking.customer_name} · ${booking.customer_phone}`;
+    pbEls.confDetails.textContent = `${booking.customer_name} · ${body.customer_phone}`;
     pbEls.stepConfirmation.classList.remove('hidden');
     pbEls.stepConfirmation.scrollIntoView({ behavior: 'smooth', block: 'start' });
     pbEls.bookingForm.reset();
