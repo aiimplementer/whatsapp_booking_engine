@@ -936,7 +936,14 @@ table.sheet tr:last-child td { border-bottom: none; }
 
 /* ---- public site footer ------------------------------------------------ */
 /* Was entirely unstyled — the logo had nothing capping its size, so it
-   rendered at native resolution instead of as a small wordmark. */
+   rendered at native resolution instead of as a small wordmark.
+   Uses .site-powered-by (its own class) rather than the .powered-by
+   class the admin sidebar footer already uses — those are two different
+   components that happen to share visual intent, not one shared style.
+   Reusing .powered-by leaked display:inline-flex into the sidebar, where
+   the logo's fixed 20px height + a flex-shrinkable image squashed it
+   horizontally. Keeping this fully separate means changes here can never
+   again bleed into .sidebar-footer .powered-by, or vice versa. */
 
 .site-footer {
   display: flex;
@@ -955,7 +962,7 @@ table.sheet tr:last-child td { border-bottom: none; }
 .footer-link { color: var(--blue); text-decoration: none; }
 .footer-link:hover { text-decoration: underline; }
 
-.powered-by {
+.site-powered-by {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -963,15 +970,17 @@ table.sheet tr:last-child td { border-bottom: none; }
   text-decoration: none;
   margin-left: auto; /* pins it to the right on wide screens */
 }
-.powered-by:hover { color: var(--ink); }
+.site-powered-by:hover { color: var(--ink); }
 
-/* The fix: an explicit height (not a %, which can't resolve sensibly
-   against a shrink-to-fit flex/inline container) plus width:auto to keep
-   the logo's aspect ratio, on both mobile and desktop. */
-.powered-by img {
+/* An explicit height (not a %, which can't resolve sensibly against a
+   shrink-to-fit flex/inline container) plus width:auto to keep the
+   logo's aspect ratio, on both mobile and desktop. flex-shrink:0 stops
+   the flex layout from ever compressing it non-uniformly. */
+.site-powered-by img {
   height: 18px;
   width: auto;
   display: block;
+  flex-shrink: 0;
 }
 
 @media (max-width: 480px) {
@@ -979,11 +988,11 @@ table.sheet tr:last-child td { border-bottom: none; }
     padding: 1rem 1rem 1.5rem;
     font-size: 0.8rem;
   }
-  .powered-by {
+  .site-powered-by {
     margin-left: 0; /* no room to float it right on a narrow row */
     flex-basis: 100%;
   }
-  .powered-by img { height: 16px; }
+  .site-powered-by img { height: 16px; }
 }
 
 :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
