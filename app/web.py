@@ -7,10 +7,19 @@ router free of any DB/session dependencies of its own.
 """
 
 from fastapi import APIRouter, Request
+from fastapi.responses import PlainTextResponse
 from fastapi.templating import Jinja2Templates
 
 router = APIRouter(include_in_schema=False)
 templates = Jinja2Templates(directory="app/templates")
+
+
+def _humanize_slug(slug: str) -> str:
+    """Turn a URL slug like 'nimbus-hair-studio' into 'Nimbus Hair Studio'
+    for use as a fallback page title/heading before the real business name
+    loads from the API — keeps the booking page meaningful for both SEO
+    crawlers and the brief instant before JS runs."""
+    return " ".join(part.capitalize() for part in slug.replace("_", "-").split("-") if part)
 
 
 @router.get("/")
@@ -87,4 +96,41 @@ async def platform_admin_console(request: Request):
 
 @router.get("/book/{tenant_slug}")
 async def public_booking(request: Request, tenant_slug: str):
-    return templates.TemplateResponse(request, "public/book.html", {"tenant_slug": tenant_slug})
+    return templates.TemplateResponse(
+        request,
+        "public/book.html",
+        {"tenant_slug": tenant_slug, "business_label": _humanize_slug(tenant_slug)},
+    )
+
+
+@router.get("/robots.txt")
+async def robots_txt():
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Allow: /book/",
+        "Disallow: /admin",
+        "Disallow: /platform-admin",
+        "Disallow: /api/",
+        "Sitemap: /sitemap.xml",
+    ]
+    return PlainTextResponse("\n".join(lines) + "\n")
+
+
+@router.get("/sitemap.xml")
+async def sitemap_xml(request: Request):
+    # Static marketing pages only — individual tenant booking pages
+    # (/book/{slug}) are created continuously and aren't enumerated here;
+    # they're reachable via robots.txt's blanket "Allow: /book/" and
+    # whatever external links a business shares.
+    base = f"{request.url.scheme}://{request.url.netloc}"
+    urls = [
+        (f"{base}/", "1.0"),
+        (f"{base}/admin/signup", "0.6"),
+    ]
+    body = ['<?xml version="1.0" encoding="UTF-8"?>',
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for loc, priority in urls:
+        body.append(f"  <url><loc>{loc}</loc><priority>{priority}</priority></url>")
+    body.append("</urlset>")
+    return PlainTextResponse("\n".join(body) + "\n", media_type="application/xml")

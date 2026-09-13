@@ -53,10 +53,12 @@
 <div class="panel">
   <h3>Existing schedules</h3>
   <div id="cfg-skeleton" class="skeleton">Loading…</div>
+  <div class="table-scroll">
   <table class="sheet hidden" id="cfg-table">
     <thead><tr><th>Applies to</th><th>Working days</th><th>Slot / buffer</th><th>Advance</th><th></th></tr></thead>
     <tbody id="cfg-tbody"></tbody>
   </table>
+  </div>
 </div>
 
 <div class="panel">
@@ -148,10 +150,12 @@
 <div class="panel">
   <h3>Existing daily blocks</h3>
   <div id="rec-skeleton" class="skeleton">Loading…</div>
+  <div class="table-scroll">
   <table class="sheet hidden" id="rec-table">
     <thead><tr><th>Time</th><th>Repeats</th><th>Reason</th><th>Status</th><th></th></tr></thead>
     <tbody id="rec-tbody"></tbody>
   </table>
+  </div>
 </div>
 {% endblock %}
 {% block admin_scripts %}

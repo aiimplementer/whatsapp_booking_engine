@@ -1,6 +1,20 @@
 {% extends "base.html" %}
-{% block title %}ScheduleMate — booking, kept like a ledger{% endblock %}
+{% block title %}ScheduleMate — WhatsApp appointment booking, kept like a ledger{% endblock %}
+{% block meta_description %}ScheduleMate gives salons, clinics, and local service businesses a WhatsApp number and a booking link that share one calendar — no double-bookings, no back-and-forth.{% endblock %}
 {% block bodyclass %}no-ruling{% endblock %}
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "ScheduleMate",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "description": "WhatsApp-first appointment booking for salons, clinics, and local service businesses — one shared calendar, no double-bookings.",
+  "url": "{{ request.url.scheme }}://{{ request.url.netloc }}/"
+}
+</script>
+{% endblock %}
 {% block content %}
 <div class="container">
   <section class="hero">
@@ -20,19 +34,19 @@
     </form>
   </section>
 
-  <section class="feature-grid">
+  <section class="feature-grid" aria-label="Features">
     <div class="feature">
-      <h3>One shared calendar</h3>
+      <h2>One shared calendar</h2>
       <p class="muted">Working hours, holidays, and one-off blocks all feed the same
       slot list — WhatsApp and the web page never disagree.</p>
     </div>
     <div class="feature">
-      <h3>No overlaps, guaranteed</h3>
+      <h2>No overlaps, guaranteed</h2>
       <p class="muted">Double-bookings are rejected at the database, not just the
       form — even if two customers tap the same slot at once.</p>
     </div>
     <div class="feature">
-      <h3>A desk view for staff</h3>
+      <h2>A desk view for staff</h2>
       <p class="muted">Confirm, check in, and close out appointments from a plain
       list sorted by time — built for a busy front desk, not a spreadsheet.</p>
     </div>

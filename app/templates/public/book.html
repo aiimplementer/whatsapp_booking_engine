@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Book an appointment{% endblock %}
+{% block title %}Book with {{ business_label }} — ScheduleMate{% endblock %}
+{% block meta_description %}Book an appointment with {{ business_label }} online — pick a service and a time, no phone call or WhatsApp needed.{% endblock %}
 {% block nav %}
 <nav></nav>
 {% endblock %}
@@ -9,7 +10,7 @@
 
   <div id="booking-root" class="hidden">
     <div class="booking-header">
-      <h1 class="biz-name" id="biz-name">&nbsp;</h1>
+      <h1 class="biz-name" id="biz-name">{{ business_label }}</h1>
       <p class="muted" id="biz-sub">Pick a service and a time that works for you.</p>
     </div>
 

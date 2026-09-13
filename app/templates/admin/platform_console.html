@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Platform admin — ScheduleMate{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
 {% block bodyclass %}no-ruling{% endblock %}
 {% block nav %}
 <nav class="admin-topnav">
@@ -33,6 +34,7 @@
     <div id="banner" class="banner banner-error" hidden></div>
     <div id="tenants-skeleton" class="skeleton">Loading tenants…</div>
 
+    <div class="table-scroll">
     <table class="sheet hidden" id="tenants-table">
       <thead>
         <tr>
@@ -48,6 +50,7 @@
       </thead>
       <tbody id="tenants-tbody"></tbody>
     </table>
+    </div>
 
     <div class="row" id="pagination" style="justify-content: center; margin-top: 1.25rem;"></div>
   </div>

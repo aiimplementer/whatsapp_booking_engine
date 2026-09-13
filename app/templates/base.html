@@ -3,12 +3,32 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{% block title %}ScheduleMate{% endblock %}</title>
+  <title>{% block title %}ScheduleMate — WhatsApp appointment booking{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}ScheduleMate turns WhatsApp and a simple booking link into a full appointment desk for salons, clinics, and local service businesses — no double-bookings, no back-and-forth.{% endblock %}" />
+  <meta name="robots" content="{% block robots %}index, follow{% endblock %}" />
+  <meta name="theme-color" content="#0d2e6d" />
+  {% set canonical_url = self.canonical() %}
+  <link rel="canonical" href="{% block canonical %}{{ request.url.scheme }}://{{ request.url.netloc }}{{ request.url.path }}{% endblock %}" />
+
+  <!-- Open Graph / Twitter card: sensible defaults, overridable per page -->
+  <meta property="og:site_name" content="ScheduleMate" />
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}" />
+  <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}" />
+  <meta property="og:description" content="{% block og_description %}{{ self.meta_description() }}{% endblock %}" />
+  <meta property="og:url" content="{{ canonical_url }}" />
+  <meta property="og:image" content="{% block og_image %}{{ request.url.scheme }}://{{ request.url.netloc }}/static/img/schedulemate-icon.png{% endblock %}" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="{{ self.og_title() }}" />
+  <meta name="twitter:description" content="{{ self.og_description() }}" />
+  <meta name="twitter:image" content="{{ self.og_image() }}" />
+
   <link rel="stylesheet" href="/static/css/app.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="/static/img/schedulemate-icon.png" />
+  <link rel="apple-touch-icon" href="/static/img/schedulemate-icon.png" />
+  {% block structured_data %}{% endblock %}
   {% block head %}{% endblock %}
 </head>
 <body class="{% block bodyclass %}{% endblock %}">
