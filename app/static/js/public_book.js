@@ -180,6 +180,13 @@ pbEls.bookingForm.addEventListener('submit', async (e) => {
     scheduled_at: selectedSlot.iso,
     notes: document.getElementById('b-notes').value.trim() || null,
   };
+  const { date, time } = fmtDateTime(selectedSlot.iso);
+  const svcName = selectedServiceId ? services.find((s) => s.id === selectedServiceId)?.name : null;
+  const confirmMsg =
+    `Book this appointment?\n\n` +
+    `${body.customer_name}${svcName ? ' — ' + svcName : ''}\n` +
+    `${date} at ${time} (${selectedSlot.duration} min)`;
+  if (!confirm(confirmMsg)) return;
   const btn = document.getElementById('b-submit');
   btn.disabled = true;
   try {
@@ -221,7 +228,11 @@ pbEls.lookupForm.addEventListener('submit', async (e) => {
       </div>`;
     if (cancellable) {
       document.getElementById('cancel-booking-btn').addEventListener('click', async () => {
-        if (!confirm('Cancel this booking?')) return;
+        const details =
+          `Cancel this booking? This can't be undone.\n\n` +
+          `${booking.customer_name} — ${date} at ${time}\n` +
+          `${booking.duration_minutes} min · Ref: ${booking.booking_ref}`;
+        if (!confirm(details)) return;
         try {
           await api(`/appointments/${encodeURIComponent(ref)}/cancel?customer_phone=${encodeURIComponent(phone)}`, {
             method: 'POST',

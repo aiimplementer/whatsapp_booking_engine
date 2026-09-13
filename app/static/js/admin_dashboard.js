@@ -12,6 +12,40 @@ const els = {
   durationInput: document.getElementById('na-duration'),
 };
 
+// Kept so the click handler can look up an appointment's details (name,
+// time, phone, service) by id when building the confirmation message,
+// without re-fetching or stashing data on the button itself.
+let currentAppointments = [];
+
+// One line per action describing what's about to happen, in the same
+// window.confirm() style already used elsewhere in the app (see
+// admin_staff.js, admin_services.js, public_book.js). Cancel/no-show get
+// the fuller appointment details since those are the ones staff most need
+// to double-check before acting; the rest stay a short, quick prompt.
+const CONFIRM_COPY = {
+  CONFIRMED: (a, when) => `Confirm the appointment for ${a.customer_name} at ${when.time} on ${when.date}?`,
+  CHECKED_IN: (a, when) => `Check in ${a.customer_name} for their ${when.time} appointment?`,
+  COMPLETED: (a, when) => `Mark ${a.customer_name}'s ${when.time} appointment as completed?`,
+  NO_SHOW: (a, when) =>
+    `Mark this appointment as a no-show?\n\n` +
+    `${a.customer_name} · ${a.customer_phone}\n` +
+    `${when.date} at ${when.time} · ${a.duration_minutes} min\n` +
+    `Ref: ${a.booking_ref}`,
+  CANCELLED: (a, when) =>
+    `Cancel this appointment? This can't be undone.\n\n` +
+    `${a.customer_name} · ${a.customer_phone}\n` +
+    `${when.date} at ${when.time} · ${a.duration_minutes} min\n` +
+    `Ref: ${a.booking_ref}`,
+};
+
+function confirmTransition(appt, to) {
+  const tz = Api.getTenantTimezone();
+  const when = fmtDateTime(appt.scheduled_at, tz);
+  const build = CONFIRM_COPY[to];
+  const message = build ? build(appt, when) : `Mark this appointment as ${statusLabel(to)}?`;
+  return window.confirm(message);
+}
+
 const NEXT_ACTIONS = {
   PENDING: [
     { to: 'CONFIRMED', label: 'Confirm', cls: 'btn' },
@@ -156,6 +190,7 @@ async function loadAppointments() {
       els.empty.hidden = false;
       return;
     }
+    currentAppointments = appts;
     els.ledger.innerHTML = renderLedger(appts);
     els.ledger.hidden = false;
   } catch (err) {
@@ -169,6 +204,8 @@ els.ledger.addEventListener('click', async (e) => {
   if (!btn) return;
   const id = btn.dataset.id;
   const to = btn.dataset.transition;
+  const appt = currentAppointments.find((a) => String(a.id) === String(id));
+  if (appt && !confirmTransition(appt, to)) return;
   btn.disabled = true;
   try {
     await Api.patch(`/api/v1/appointments/${id}`, { status: to });
