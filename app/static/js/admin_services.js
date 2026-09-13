@@ -78,7 +78,7 @@ svcEls.tbody.addEventListener('click', async (e) => {
     if (svc) openForm(svc);
   }
   if (deactivateBtn) {
-    if (!confirm('Deactivate this service? It will stop showing on the booking page.')) return;
+    if (!(await confirmDialog('Deactivate this service? It will stop showing on the booking page.', { danger: true }))) return;
     try {
       await Api.del(`/api/v1/scheduling/services/${deactivateBtn.dataset.deactivate}`);
       toast('Service deactivated');

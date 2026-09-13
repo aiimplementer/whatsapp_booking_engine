@@ -85,7 +85,7 @@ staffEls.tbody.addEventListener('change', async (e) => {
 staffEls.tbody.addEventListener('click', async (e) => {
   const btn = e.target.closest('[data-remove]');
   if (!btn) return;
-  if (!confirm('Remove this staff member? They will no longer be able to log in.')) return;
+  if (!(await confirmDialog('Remove this staff member? They will no longer be able to log in.', { danger: true }))) return;
   try {
     await Api.del(`/api/v1/tenants/me/users/${btn.dataset.remove}`);
     toast('Staff member removed');

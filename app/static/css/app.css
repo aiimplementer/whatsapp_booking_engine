@@ -1029,8 +1029,49 @@ table.sheet tr:last-child td { border-bottom: none; }
   }
 }
 
-/* ---- utility --------------------------------------------------------------- */
+/* ---- confirmation modal (replaces window.confirm()) ------------------------ */
 
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 37, 33, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 200;
+}
+
+.confirm-dialog {
+  background: var(--paper-raised);
+  border-radius: var(--radius-md);
+  box-shadow: 0 20px 50px -20px rgba(28, 37, 33, 0.5);
+  padding: 1.25rem 1.4rem;
+  max-width: 420px;
+  width: 100%;
+}
+
+.confirm-message {
+  white-space: pre-line;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ink);
+  margin: 0 0 1.15rem;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+@media (max-width: 480px) {
+  .confirm-dialog { padding: 1rem 1.1rem; }
+  .confirm-actions { flex-direction: column-reverse; }
+  .confirm-actions .btn { width: 100%; }
+}
+
+/* ---- utility --------------------------------------------------------------- */
 .muted { color: var(--ink-soft); }
 .mono { font-family: var(--font-mono); }
 .center { text-align: center; }

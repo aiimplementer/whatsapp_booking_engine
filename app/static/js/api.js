@@ -185,3 +185,52 @@ function escapeHtml(str) {
 function statusLabel(status) {
   return String(status || "").replaceAll("_", " ").toLowerCase();
 }
+
+// ---- confirm dialog (replaces window.confirm()) ----------------------------
+// window.confirm() always shows a browser-chrome title bar naming the page's
+// origin (e.g. "whatsapp-booking-engine.onrender.com says") — that's a
+// deliberate browser security feature so a page can never impersonate a
+// trusted system dialog, and it can't be restyled, retitled, or hidden from
+// script. This is a self-contained replacement: same call shape (returns a
+// Promise<boolean>, true = confirmed), but rendered as an in-page modal
+// using the app's own look, so it reads as part of ScheduleMate instead of
+// a raw browser popup — on both desktop and mobile.
+function confirmDialog(message, opts = {}) {
+  return new Promise((resolve) => {
+    const okLabel = opts.okLabel || "OK";
+    const cancelLabel = opts.cancelLabel || "Cancel";
+    const okCls = opts.danger ? "btn btn-danger" : "btn";
+
+    const backdrop = document.createElement("div");
+    backdrop.className = "confirm-backdrop";
+    backdrop.innerHTML = `
+      <div class="confirm-dialog" role="alertdialog" aria-modal="true">
+        <p class="confirm-message"></p>
+        <div class="confirm-actions">
+          <button type="button" class="btn btn-secondary" data-act="cancel">${escapeHtml(cancelLabel)}</button>
+          <button type="button" class="${okCls}" data-act="ok">${escapeHtml(okLabel)}</button>
+        </div>
+      </div>`;
+    // textContent (not innerHTML) so the message's own "\n" line breaks are
+    // safe from HTML injection; .confirm-message uses white-space: pre-line
+    // in CSS so those breaks still render, matching window.confirm's look.
+    backdrop.querySelector(".confirm-message").textContent = message;
+    document.body.appendChild(backdrop);
+
+    function close(result) {
+      document.removeEventListener("keydown", onKey);
+      backdrop.remove();
+      resolve(result);
+    }
+    function onKey(e) {
+      if (e.key === "Escape") close(false);
+    }
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) close(false);
+    });
+    backdrop.querySelector('[data-act="cancel"]').addEventListener("click", () => close(false));
+    backdrop.querySelector('[data-act="ok"]').addEventListener("click", () => close(true));
+    document.addEventListener("keydown", onKey);
+    backdrop.querySelector('[data-act="ok"]').focus();
+  });
+}

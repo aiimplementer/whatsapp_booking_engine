@@ -93,7 +93,7 @@ async function onToggleSubscription(e) {
   const nextEnabled = btn.dataset.next === "true";
   const action = nextEnabled ? "enable" : "disable";
 
-  if (!window.confirm(`${action === "enable" ? "Enable" : "Disable"} the subscription for this tenant?`)) {
+  if (!(await confirmDialog(`${action === "enable" ? "Enable" : "Disable"} the subscription for this tenant?`))) {
     return;
   }
 

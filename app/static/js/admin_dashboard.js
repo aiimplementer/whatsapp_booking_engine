@@ -43,7 +43,7 @@ function confirmTransition(appt, to) {
   const when = fmtDateTime(appt.scheduled_at, tz);
   const build = CONFIRM_COPY[to];
   const message = build ? build(appt, when) : `Mark this appointment as ${statusLabel(to)}?`;
-  return window.confirm(message);
+  return confirmDialog(message, { danger: to === 'CANCELLED' });
 }
 
 const NEXT_ACTIONS = {
@@ -205,7 +205,7 @@ els.ledger.addEventListener('click', async (e) => {
   const id = btn.dataset.id;
   const to = btn.dataset.transition;
   const appt = currentAppointments.find((a) => String(a.id) === String(id));
-  if (appt && !confirmTransition(appt, to)) return;
+  if (appt && !(await confirmTransition(appt, to))) return;
   btn.disabled = true;
   try {
     await Api.patch(`/api/v1/appointments/${id}`, { status: to });

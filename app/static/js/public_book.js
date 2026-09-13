@@ -192,7 +192,7 @@ pbEls.bookingForm.addEventListener('submit', async (e) => {
     `${body.customer_name}${svcName ? ' — ' + svcName : ''}\n` +
     `${body.customer_phone}\n` +
     `${date} at ${time} (${selectedSlot.duration} min)`;
-  if (!confirm(confirmMsg)) return;
+  if (!(await confirmDialog(confirmMsg))) return;
   const btn = document.getElementById('b-submit');
   btn.disabled = true;
   try {
@@ -239,7 +239,7 @@ pbEls.lookupForm.addEventListener('submit', async (e) => {
           `Cancel this booking? This can't be undone.\n\n` +
           `${booking.customer_name} — ${date} at ${time}\n` +
           `${booking.duration_minutes} min · Ref: ${booking.booking_ref}`;
-        if (!confirm(details)) return;
+        if (!(await confirmDialog(details, { danger: true }))) return;
         try {
           await api(`/appointments/${encodeURIComponent(ref)}/cancel?customer_phone=${encodeURIComponent(phone)}`, {
             method: 'POST',
