@@ -190,6 +190,7 @@ pbEls.bookingForm.addEventListener('submit', async (e) => {
   const confirmMsg =
     `Book this appointment?\n\n` +
     `${body.customer_name}${svcName ? ' — ' + svcName : ''}\n` +
+    `${body.customer_phone}\n` +
     `${date} at ${time} (${selectedSlot.duration} min)`;
   if (!confirm(confirmMsg)) return;
   const btn = document.getElementById('b-submit');
