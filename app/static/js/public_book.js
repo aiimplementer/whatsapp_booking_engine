@@ -147,7 +147,11 @@ function renderSlotGrid() {
   pbEls.noSlots.classList.toggle('hidden', slots.length > 0);
   pbEls.slotGrid.innerHTML = slots
     .map((s) => {
-      const t = new Date(s.scheduled_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+      // hour12 forced explicitly — without it, toLocaleTimeString falls back
+      // to the device's clock-format setting (many Android phones default
+      // to 24-hour time regardless of locale), which is why slots showed
+      // "14:00" on mobile but "2:00 PM" on desktop for the same booking.
+      const t = new Date(s.scheduled_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true });
       return `<button type="button" class="slot-btn" data-iso="${s.scheduled_at}" data-duration="${s.duration_minutes}">${t}</button>`;
     })
     .join('');

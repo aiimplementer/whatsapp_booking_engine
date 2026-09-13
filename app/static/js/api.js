@@ -152,7 +152,11 @@ function fmtDateTime(iso, timeZone) {
     date: d.toLocaleDateString(undefined, {
       weekday: "short", month: "short", day: "numeric", year: "numeric", ...opts,
     }),
-    time: d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", ...opts }),
+    // hour12 forced explicitly — otherwise this falls back to the device's
+    // clock-format setting (e.g. Android phones set to 24-hour time),
+    // which is why times showed as "14:00" on some phones but "2:00 PM"
+    // on desktop for the same appointment.
+    time: d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true, ...opts }),
   };
 }
 
