@@ -340,6 +340,30 @@ a.quiet { color: inherit; text-decoration: none; }
   padding: 0;
 }
 
+/* .btn-small is the class actually used across the app (dashboard row
+   actions, scheduling lists, staff/services tables, public booking) — it
+   was never defined, so those buttons rendered at full .btn size instead
+   of a compact one, which is what made the appointment-row action buttons
+   crowd/overflow on narrow screens. Alias it to the same compact sizing
+   as .btn-sm so both names work. */
+.btn-small,
+.btn-sm {
+  padding: 0.32rem 0.65rem;
+  font-size: 0.82rem;
+  gap: 0.3rem;
+}
+
+/* .btn-danger is used everywhere a destructive action needs to read as
+   different from a normal/confirm action (Cancel, Remove, Deactivate) but
+   had no styles, so it rendered identically to the default blue .btn —
+   which is why "Cancel" looked the same as "Check in" in the ledger. */
+.btn-danger {
+  background: var(--coral-soft);
+  color: var(--coral);
+  border: 1px solid transparent;
+}
+.btn-danger:hover { background: var(--coral); color: var(--paper-raised); }
+
 /* ---- forms ---------------------------------------------------------------- */
 
 .field {
@@ -904,6 +928,107 @@ table.sheet tr:last-child td { border-bottom: none; }
 .month-day.is-empty .month-day-num { color: var(--ink-soft); }
 .month-day-count { font-size: 0.7rem; }
 
+/* ---- appointment ledger (dashboard) ---------------------------------------
+   These classes (.ledger, .ledger-row, .stamp, .actions, etc.) were used
+   by admin_dashboard.js/admin_calendar.js/public_book.js but had no base
+   rules anywhere in this file — only the two mobile overrides further
+   down existed, targeting styles that didn't exist yet. Unstyled, each
+   row's status stamp and its Check-in/No-show/Cancel buttons fell back to
+   plain inline/block layout with full-size buttons, which is what caused
+   the buttons to crowd together and wrap/overflow oddly on phones. This
+   section gives the row a real layout and gives the buttons a size that
+   fits three across, or wraps cleanly to a second line when it can't. */
+
+.ledger { border-top: 1px solid var(--rule); }
+
+.ledger-date-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.55rem 0.25rem;
+  margin-top: 0.75rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--blue-deep);
+  border-bottom: 1px solid var(--rule-strong);
+}
+.ledger-date-header:first-child { margin-top: 0; }
+.ledger-date-header .muted { font-family: var(--font-body); font-weight: 400; font-size: 0.85rem; }
+
+.ledger-row {
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  padding: 0.85rem 0.25rem;
+  border-bottom: 1px solid var(--rule);
+}
+.ledger-row:hover { background: var(--paper); }
+
+.ledger-row .slot-time {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--blue-deep);
+  align-self: start;
+}
+
+.ledger-row .who { font-weight: 600; }
+.ledger-row .meta { font-size: 0.84rem; color: var(--ink-soft); margin-top: 0.15rem; }
+
+.ledger-row .actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem 0.5rem;
+}
+
+/* Status stamp — a small pill, colour-coded by meaning rather than one
+   flat look, so "cancelled" reads as different from "confirmed" at a
+   glance instead of all statuses looking like the same grey text. */
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-transform: capitalize;
+  white-space: nowrap;
+  background: var(--slate-soft);
+  color: var(--slate);
+}
+.stamp-pending,
+.stamp-rescheduled { background: var(--amber-soft); color: var(--amber); }
+.stamp-confirmed,
+.stamp-checked_in,
+.stamp-enabled,
+.stamp-active { background: var(--sage-soft); color: var(--sage); }
+.stamp-completed { background: var(--blue-deep); color: var(--paper-raised); }
+.stamp-cancelled,
+.stamp-no_show,
+.stamp-disabled,
+.stamp-suspended { background: var(--coral-soft); color: var(--coral); }
+.stamp-expired { background: var(--slate-soft); color: var(--slate); }
+
+@media (max-width: 800px) {
+  /* Stack time / details / actions vertically instead of forcing the
+     3-column grid to squeeze into one column (which pushed the actions
+     row to a width shorter than its three buttons and cut "Cancel" off
+     at the edge, as seen on the appointments page on mobile). */
+  .ledger-row {
+    grid-template-columns: 1fr;
+  }
+  .ledger-row .slot-time { font-size: 0.95rem; }
+  .ledger-row .actions {
+    justify-content: flex-start;
+    margin-top: 0.15rem;
+  }
+}
+
 /* ---- utility --------------------------------------------------------------- */
 
 .muted { color: var(--ink-soft); }
@@ -922,8 +1047,6 @@ table.sheet tr:last-child td { border-bottom: none; }
   .sidebar-footer { margin-top: 0.5rem; padding-top: 0.5rem; }
   .app-main { padding: 1rem; }
   .feature-grid { grid-template-columns: 1fr; }
-  .ledger-row { grid-template-columns: 1fr; }
-  .ledger-row .actions { justify-content: flex-start; }
   .month-day { min-height: 52px; padding: 0.3rem; }
   .month-weekday { font-size: 0.62rem; padding: 0.3rem; }
 }
