@@ -9,6 +9,7 @@ const setEls = {
   timezone: document.getElementById('s-timezone'),
   whatsapp: document.getElementById('s-whatsapp'),
   webBooking: document.getElementById('s-web-booking'),
+  cancellationPolicy: document.getElementById('s-cancellation-policy'),
 };
 
 async function loadTenant() {
@@ -22,6 +23,7 @@ async function loadTenant() {
     populateTimezoneSelect(setEls.timezone, tenant.timezone);
     setEls.whatsapp.value = tenant.whatsapp_number || '';
     setEls.webBooking.checked = tenant.web_booking_enabled;
+    setEls.cancellationPolicy.value = tenant.cancellation_policy || '';
     Api.setSession({ tenant_name: tenant.name });
   } catch (err) {
     setEls.skeleton.hidden = true;
@@ -39,6 +41,7 @@ setEls.form.addEventListener('submit', async (e) => {
     timezone: setEls.timezone.value.trim(),
     whatsapp_number: setEls.whatsapp.value.trim() || null,
     web_booking_enabled: setEls.webBooking.checked,
+    cancellation_policy: setEls.cancellationPolicy.value.trim() || null,
   };
   const btn = document.getElementById('settings-submit');
   btn.disabled = true;

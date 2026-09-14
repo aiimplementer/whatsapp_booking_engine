@@ -33,7 +33,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.appointment import Appointment
-from app.models.scheduling import Service
+from app.models.scheduling import SchedulingConfig, Service
 from app.models.tenant import Tenant
 from app.models.whatsapp_session import WhatsAppSession
 from app.services.slots import compute_available_slots
@@ -96,10 +96,102 @@ def _render_main_menu(tenant_name: str) -> dict:
                         "title": "\u274c Cancel a Booking",
                         "description": "Cancel by reference number",
                     },
+                    {
+                        "id": "menu_hours",
+                        "title": "\U0001f550 Business Hours",
+                        "description": "View our working hours",
+                    },
+                    {
+                        "id": "menu_policy",
+                        "title": "\U0001f4c4 Cancellation Policy",
+                        "description": "View our cancellation policy",
+                    },
                 ],
             }
         ],
     }
+
+
+# Bit0=Sun .. bit6=Sat, matching the working_days bitmask convention used by
+# SchedulingConfig / TimeSlotWindow (see app/schemas/scheduling.py).
+_DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+
+def _format_time_12h(hhmm: str) -> str:
+    """'09:00' -> '9:00 AM'."""
+    return datetime.strptime(hhmm, "%H:%M").strftime("%I:%M %p").lstrip("0")
+
+
+def _format_working_hours(config: SchedulingConfig) -> str:
+    """Render a SchedulingConfig's working_days + time_slots (the same data
+    shown on the admin dashboard's Scheduling > Working hours tab) as a
+    human-readable weekly schedule."""
+    windows_by_day: dict[int, list[tuple[str, str]]] = {}
+    for window in config.time_slots or []:
+        windows_by_day.setdefault(window["day"], []).append((window["start"], window["end"]))
+
+    lines = []
+    for day in range(7):
+        name = _DAY_NAMES[day]
+        is_working_day = bool(config.working_days & (1 << day))
+        if not is_working_day:
+            lines.append(f"{name}: Closed")
+            continue
+        windows = sorted(windows_by_day.get(day, []))
+        if not windows:
+            lines.append(f"{name}: Hours not set")
+            continue
+        ranges = ", ".join(
+            f"{_format_time_12h(start)} \u2013 {_format_time_12h(end)}" for start, end in windows
+        )
+        lines.append(f"{name}: {ranges}")
+    return "\n".join(lines)
+
+
+async def _show_business_hours(db: AsyncSession, tenant: Tenant) -> list:
+    """Business-level menu option: reply with the tenant's working hours,
+    sourced from the tenant-wide scheduling config (service_id IS NULL) —
+    the same "Applies to: Tenant-wide default" config set on the admin
+    dashboard's Scheduling > Working hours tab."""
+    result = await db.execute(
+        select(SchedulingConfig).where(
+            SchedulingConfig.tenant_id == tenant.id,
+            SchedulingConfig.service_id.is_(None),
+        )
+    )
+    config = result.scalar_one_or_none()
+
+    if config is None:
+        return [
+            f"Sorry, working hours haven't been set up for *{tenant.name}* yet. "
+            "Please reach out to us directly, or reply *menu* for other options."
+        ]
+
+    body = (
+        f"\U0001f550 *Working Hours \u2014 {tenant.name}*\n\n"
+        f"{_format_working_hours(config)}\n\n"
+        "Reply *menu* for other options."
+    )
+    return [body]
+
+
+def _show_cancellation_policy(tenant: Tenant) -> list:
+    """Business-level menu option: reply with the tenant's cancellation
+    policy, sourced from tenants.cancellation_policy — the free-text field
+    set on the admin dashboard's Business settings page. No DB round-trip
+    needed since `tenant` is already loaded for every incoming message."""
+    policy_text = (tenant.cancellation_policy or "").strip()
+    if not policy_text:
+        return [
+            f"*{tenant.name}* hasn't published a cancellation policy yet. "
+            "Please reach out to us directly with any questions, or reply *menu* for other options."
+        ]
+    body = (
+        f"\U0001f4c4 *Cancellation Policy \u2014 {tenant.name}*\n\n"
+        f"{policy_text}\n\n"
+        "Reply *menu* for other options."
+    )
+    return [body]
 
 
 async def handle_incoming_message(
@@ -150,6 +242,24 @@ async def _handle_main_menu(
         or (list_reply_id is None and "cancel" not in lowered and "check" in lowered)
     )
     chose_cancel = list_reply_id == "menu_cancel" or lowered == "3" or "cancel" in lowered
+    chose_hours = (
+        list_reply_id == "menu_hours"
+        or lowered == "4"
+        or "hours" in lowered
+        or "timing" in lowered
+    )
+    chose_policy = (
+        list_reply_id == "menu_policy"
+        or lowered == "5"
+        or "policy" in lowered
+        or "policies" in lowered
+    )
+
+    if chose_hours:
+        return await _show_business_hours(db, tenant)
+
+    if chose_policy:
+        return _show_cancellation_policy(tenant)
 
     if chose_book:
         result = await db.execute(

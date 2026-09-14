@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, String, Boolean, DateTime
+from sqlalchemy import ForeignKey, String, Boolean, DateTime, Text
 from sqlalchemy.dialects.postgresql import ENUM, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -43,6 +43,10 @@ class Tenant(UUIDPKMixin, TimestampMixin, Base):
     # ops never has to reason about (or accidentally clobber) product-status
     # transitions, and vice versa.
     subscription_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Free-text policy shown to customers (e.g. via the WhatsApp bot's
+    # "Cancellation Policy" menu option). Optional — tenants that haven't
+    # filled it in yet just get a generic fallback message at read time.
+    cancellation_policy: Mapped[str | None] = mapped_column(Text)
     branding: Mapped[dict] = mapped_column(JSONB, default=dict)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
