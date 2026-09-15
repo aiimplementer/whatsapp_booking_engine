@@ -5,6 +5,7 @@ const pbEls = {
   loadError: document.getElementById('load-error'),
   root: document.getElementById('booking-root'),
   bizName: document.getElementById('biz-name'),
+  businessInfo: document.getElementById('business-info'),
   serviceList: document.getElementById('service-list'),
   stepSlots: document.getElementById('step-slots'),
   dayTabs: document.getElementById('day-tabs'),
@@ -22,33 +23,56 @@ const pbEls = {
   lookupResult: document.getElementById('lookup-result'),
   tabNew: document.getElementById('tab-new'),
   tabLookup: document.getElementById('tab-lookup'),
+  tabOffers: document.getElementById('tab-offers'),
+  tabAnnouncements: document.getElementById('tab-announcements'),
+  tabHours: document.getElementById('tab-hours'),
   bookingAppView: document.getElementById('booking-app'),
   lookupView: document.getElementById('lookup-view'),
+  offersView: document.getElementById('offers-view'),
+  announcementsView: document.getElementById('announcements-view'),
+  hoursView: document.getElementById('hours-view'),
+  offersContent: document.getElementById('offers-content'),
+  announcementsContent: document.getElementById('announcements-content'),
+  hoursContent: document.getElementById('hours-content'),
   bookingSide: document.getElementById('booking-side'),
   sideService: document.getElementById('side-service'),
   sideTime: document.getElementById('side-time'),
   sideHint: document.getElementById('side-hint'),
 };
 
-/* ---- New booking / Look up switch --------------------------------------- */
-// A segmented toggle rather than stacking both flows on the page — only one
+/* ---- New booking / Look up / Offers / Announcements / Hours switch ------ */
+// A segmented toggle rather than stacking every view on the page — only one
 // is visible at a time, so the page doesn't grow tall just to accommodate
-// an occasional-use lookup form underneath the main flow.
+// occasional-use info panels underneath the main booking flow. The last
+// three tabs are info-only (added on top of the original New booking / Look
+// up split) and are hidden individually by init() if the tenant hasn't set
+// that content, so a tenant with nothing to show there looks exactly like
+// the page did before this change.
+const PB_TABS = {
+  new: { tab: 'tabNew', view: 'bookingAppView' },
+  lookup: { tab: 'tabLookup', view: 'lookupView' },
+  offers: { tab: 'tabOffers', view: 'offersView' },
+  announcements: { tab: 'tabAnnouncements', view: 'announcementsView' },
+  hours: { tab: 'tabHours', view: 'hoursView' },
+};
+
 function setMode(mode) {
-  const isNew = mode === 'new';
-  pbEls.tabNew.classList.toggle('active', isNew);
-  pbEls.tabLookup.classList.toggle('active', !isNew);
-  pbEls.tabNew.setAttribute('aria-selected', String(isNew));
-  pbEls.tabLookup.setAttribute('aria-selected', String(!isNew));
-  pbEls.bookingAppView.classList.toggle('hidden', !isNew);
-  pbEls.lookupView.classList.toggle('hidden', isNew);
+  Object.entries(PB_TABS).forEach(([key, { tab, view }]) => {
+    const isActive = key === mode;
+    pbEls[tab].classList.toggle('active', isActive);
+    pbEls[tab].setAttribute('aria-selected', String(isActive));
+    pbEls[view].classList.toggle('hidden', !isActive);
+  });
   // The recap sidebar only means anything for the booking flow — hide it
-  // while looking up/cancelling so that view isn't left with a stale or
-  // pointless "Not selected yet" card beside it.
-  pbEls.bookingSide.classList.toggle('hidden', !isNew);
+  // for every other tab so those views aren't left with a stale or
+  // pointless "Not selected yet" card beside them.
+  pbEls.bookingSide.classList.toggle('hidden', mode !== 'new');
 }
 pbEls.tabNew.addEventListener('click', () => setMode('new'));
 pbEls.tabLookup.addEventListener('click', () => setMode('lookup'));
+pbEls.tabOffers.addEventListener('click', () => setMode('offers'));
+pbEls.tabAnnouncements.addEventListener('click', () => setMode('announcements'));
+pbEls.tabHours.addEventListener('click', () => setMode('hours'));
 
 let services = [];
 let selectedServiceId = null;
@@ -260,12 +284,69 @@ pbEls.lookupForm.addEventListener('submit', async (e) => {
   }
 });
 
+/* ---- Business info: Offers / Announcements / Hours tabs + Policy toggle - */
+// Offers, Announcements, and Business Hours are the 3rd/4th/5th tabs next
+// to "New booking" / "Look up / cancel" (see PB_TABS above). Cancellation
+// Policy stays in the small collapsed toggle beneath the business name —
+// it's read far less often than the other three, so it doesn't need a full
+// tab of its own. Each piece — the three tabs and the toggle — is shown
+// only if the tenant has actually set that content; a tenant with nothing
+// filled in sees exactly the two original tabs, unchanged.
+function renderWorkingHoursTable(days) {
+  const rows = days
+    .map((d) => {
+      const value = !d.is_open
+        ? 'Closed'
+        : d.windows.length > 0
+        ? d.windows.join(', ')
+        : 'Hours not set';
+      return `<div class="hours-row"><span class="hours-day">${escapeHtml(d.day)}</span><span class="hours-range">${escapeHtml(value)}</span></div>`;
+    })
+    .join('');
+  return `<div class="hours-table">${rows}</div>`;
+}
+
+function renderTextContent(text) {
+  return `<p>${escapeHtml(text).replace(/\n/g, '<br>')}</p>`;
+}
+
+function renderInfoTabs(info) {
+  if (info.offers) {
+    pbEls.offersContent.innerHTML = renderTextContent(info.offers);
+    pbEls.tabOffers.classList.remove('hidden');
+  }
+  if (info.announcements) {
+    pbEls.announcementsContent.innerHTML = renderTextContent(info.announcements);
+    pbEls.tabAnnouncements.classList.remove('hidden');
+  }
+  if (info.working_hours && info.working_hours.length > 0) {
+    pbEls.hoursContent.innerHTML = renderWorkingHoursTable(info.working_hours);
+    pbEls.tabHours.classList.remove('hidden');
+  }
+}
+
+function renderCancellationPolicyToggle(info) {
+  if (!info.cancellation_policy) {
+    pbEls.businessInfo.classList.add('hidden');
+    pbEls.businessInfo.innerHTML = '';
+    return;
+  }
+  pbEls.businessInfo.innerHTML = `
+    <details class="info-toggle">
+      <summary>\u{1F4C4} Cancellation Policy</summary>
+      <div class="info-panel">${renderTextContent(info.cancellation_policy)}</div>
+    </details>`;
+  pbEls.businessInfo.classList.remove('hidden');
+}
+
 async function init() {
   try {
     const info = await api('');
     pbEls.loadError.classList.add('hidden');
     pbEls.root.classList.remove('hidden');
     pbEls.bizName.textContent = info.name;
+    renderInfoTabs(info);
+    renderCancellationPolicyToggle(info);
     services = info.services || [];
     if (services.length > 0) {
       renderServices();

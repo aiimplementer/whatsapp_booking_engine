@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.deps import get_public_tenant_db, resolve_tenant_by_slug
 from app.models.appointment import Appointment
-from app.models.scheduling import Service
+from app.models.scheduling import Service, SchedulingConfig
 from app.models.tenant import Tenant
 from app.schemas.public import (
     AvailableSlotOut,
@@ -16,6 +16,7 @@ from app.schemas.public import (
     PublicBookingOut,
     PublicTenantOut,
 )
+from app.services.business_hours import working_hours_by_day
 from app.services.slots import compute_available_slots
 
 router = APIRouter(prefix="/api/v1/public/{tenant_slug}", tags=["public-booking"])
@@ -45,12 +46,29 @@ async def get_business_info(
         select(Service).where(Service.tenant_id == tenant.id, Service.active.is_(True))
     )
     services = result.scalars().all()
+
+    # Tenant-wide working hours (service_id IS NULL) — same "Applies to:
+    # Tenant-wide default" config set on the admin dashboard's Scheduling >
+    # Working hours tab. Per-service overrides aren't surfaced here since
+    # the public page doesn't have a per-service hours view yet.
+    config_result = await db.execute(
+        select(SchedulingConfig).where(
+            SchedulingConfig.tenant_id == tenant.id,
+            SchedulingConfig.service_id.is_(None),
+        )
+    )
+    config = config_result.scalar_one_or_none()
+
     return PublicTenantOut(
         name=tenant.name,
         slug=tenant.slug,
         timezone=tenant.timezone,
         branding=tenant.branding,
         services=services,
+        cancellation_policy=tenant.cancellation_policy,
+        offers=tenant.offers,
+        announcements=tenant.announcements,
+        working_hours=working_hours_by_day(config) if config else [],
     )
 
 

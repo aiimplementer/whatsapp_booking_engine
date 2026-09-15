@@ -584,7 +584,9 @@ table.sheet tr:last-child td { border-bottom: none; }
 }
 
 .mode-switch {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
   padding: 0.2rem;
   border: 1px solid var(--rule-strong);
   border-radius: var(--radius-md);
@@ -601,6 +603,7 @@ table.sheet tr:last-child td { border-bottom: none; }
   background: transparent;
   color: var(--ink-soft);
   cursor: pointer;
+  white-space: nowrap;
 }
 .mode-tab.active {
   background: var(--paper-raised);
@@ -611,9 +614,60 @@ table.sheet tr:last-child td { border-bottom: none; }
 
 @media (max-width: 480px) {
   .mode-tab {
-    font-size: 0.8rem;
-    padding: 0.4rem 0.7rem;
+    font-size: 0.78rem;
+    padding: 0.4rem 0.6rem;
   }
+}
+
+/* ---- business info: Cancellation Policy toggle -------------------------- */
+/* Offers/Announcements/Hours moved to mode-switch tabs (see below); this
+   toggle now only ever holds the Cancellation Policy, since it's read far
+   less often and doesn't need a full tab of its own. */
+.business-info {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  background: var(--paper-raised);
+  margin-bottom: 1rem;
+}
+
+.info-toggle summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.65rem 1rem;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+.info-toggle summary::-webkit-details-marker { display: none; }
+.info-toggle summary:hover { color: var(--blue-deep); }
+
+.info-panel {
+  padding: 0 1rem 0.9rem;
+  border-top: 1px solid var(--rule);
+}
+
+.info-icon { font-size: 0.95rem; line-height: 1; }
+
+.info-section-body {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.info-section-body p { margin: 0; }
+
+.hours-table { display: flex; flex-direction: column; }
+.hours-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.2rem 0;
+}
+.hours-day { font-weight: 600; color: var(--ink); min-width: 3rem; }
+.hours-range { text-align: right; }
+
+@media (max-width: 480px) {
+  .info-toggle summary { font-size: 0.84rem; padding: 0.55rem 0.85rem; }
+  .info-panel { padding: 0 0.85rem 0.8rem; }
 }
 
 .booking-layout { 

@@ -36,6 +36,7 @@ from app.models.appointment import Appointment
 from app.models.scheduling import SchedulingConfig, Service
 from app.models.tenant import Tenant
 from app.models.whatsapp_session import WhatsAppSession
+from app.services.business_hours import format_working_hours_text
 from app.services.slots import compute_available_slots
 
 # WhatsApp interactive lists cap out at 10 total rows across all sections.
@@ -123,39 +124,9 @@ def _render_main_menu(tenant_name: str) -> dict:
 
 
 # Bit0=Sun .. bit6=Sat, matching the working_days bitmask convention used by
-# SchedulingConfig / TimeSlotWindow (see app/schemas/scheduling.py).
-_DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-
-
-def _format_time_12h(hhmm: str) -> str:
-    """'09:00' -> '9:00 AM'."""
-    return datetime.strptime(hhmm, "%H:%M").strftime("%I:%M %p").lstrip("0")
-
-
-def _format_working_hours(config: SchedulingConfig) -> str:
-    """Render a SchedulingConfig's working_days + time_slots (the same data
-    shown on the admin dashboard's Scheduling > Working hours tab) as a
-    human-readable weekly schedule."""
-    windows_by_day: dict[int, list[tuple[str, str]]] = {}
-    for window in config.time_slots or []:
-        windows_by_day.setdefault(window["day"], []).append((window["start"], window["end"]))
-
-    lines = []
-    for day in range(7):
-        name = _DAY_NAMES[day]
-        is_working_day = bool(config.working_days & (1 << day))
-        if not is_working_day:
-            lines.append(f"{name}: Closed")
-            continue
-        windows = sorted(windows_by_day.get(day, []))
-        if not windows:
-            lines.append(f"{name}: Hours not set")
-            continue
-        ranges = ", ".join(
-            f"{_format_time_12h(start)} \u2013 {_format_time_12h(end)}" for start, end in windows
-        )
-        lines.append(f"{name}: {ranges}")
-    return "\n".join(lines)
+# SchedulingConfig / TimeSlotWindow (see app/schemas/scheduling.py). Shared
+# with the public booking page — see app/services/business_hours.py — so
+# both surfaces render the same schedule the same way.
 
 
 async def _show_business_hours(db: AsyncSession, tenant: Tenant) -> list:
@@ -179,7 +150,7 @@ async def _show_business_hours(db: AsyncSession, tenant: Tenant) -> list:
 
     body = (
         f"\U0001f550 *Working Hours \u2014 {tenant.name}*\n\n"
-        f"{_format_working_hours(config)}\n\n"
+        f"{format_working_hours_text(config)}\n\n"
         "Reply *menu* for other options."
     )
     return [body]

@@ -6,12 +6,22 @@ from pydantic import BaseModel, Field, field_validator
 from app.schemas.scheduling import ServiceOut
 
 
+class WorkingHoursDayOut(BaseModel):
+    day: str
+    is_open: bool
+    windows: list[str]
+
+
 class PublicTenantOut(BaseModel):
     name: str
     slug: str
     timezone: str
     branding: dict
     services: list[ServiceOut]
+    cancellation_policy: str | None
+    offers: str | None
+    announcements: str | None
+    working_hours: list[WorkingHoursDayOut]
 
 
 class AvailableSlotOut(BaseModel):

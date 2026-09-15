@@ -14,9 +14,14 @@
       <p class="muted" id="biz-sub">Pick a service and a time that works for you.</p>
     </div>
 
+    <div id="business-info" class="business-info hidden"></div>
+
     <div class="mode-switch" role="tablist">
       <button type="button" class="mode-tab active" id="tab-new" role="tab" aria-selected="true">New booking</button>
       <button type="button" class="mode-tab" id="tab-lookup" role="tab" aria-selected="false">Look up / cancel</button>
+      <button type="button" class="mode-tab hidden" id="tab-offers" role="tab" aria-selected="false">🎁 Offers</button>
+      <button type="button" class="mode-tab hidden" id="tab-announcements" role="tab" aria-selected="false">📢 Announcements</button>
+      <button type="button" class="mode-tab hidden" id="tab-hours" role="tab" aria-selected="false">🕐 Business Hours</button>
     </div>
 
     <div class="booking-layout">
@@ -97,6 +102,24 @@
               <button class="btn btn-block" type="submit" style="margin-top: 0.5rem;">Look up</button>
             </form>
             <div id="lookup-result" style="margin-top: 0.85rem;"></div>
+          </div>
+        </div>
+
+        <div id="offers-view" class="hidden">
+          <div class="panel">
+            <div class="info-section-body" id="offers-content"></div>
+          </div>
+        </div>
+
+        <div id="announcements-view" class="hidden">
+          <div class="panel">
+            <div class="info-section-body" id="announcements-content"></div>
+          </div>
+        </div>
+
+        <div id="hours-view" class="hidden">
+          <div class="panel">
+            <div class="hours-table" id="hours-content"></div>
           </div>
         </div>
       </div>
