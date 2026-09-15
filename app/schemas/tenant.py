@@ -17,6 +17,7 @@ class TenantOut(BaseModel):
     whatsapp_number: str | None
     web_booking_enabled: bool
     cancellation_policy: str | None
+    offers: str | None
     branding: dict
     created_at: datetime
 
@@ -38,6 +39,7 @@ class TenantUpdate(BaseModel):
     whatsapp_number: str | None = None
     web_booking_enabled: bool | None = None
     cancellation_policy: str | None = Field(default=None, max_length=4000)
+    offers: str | None = Field(default=None, max_length=4000)
     branding: dict | None = None
 
     @field_validator("timezone")

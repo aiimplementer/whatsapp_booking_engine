@@ -10,6 +10,7 @@ const setEls = {
   whatsapp: document.getElementById('s-whatsapp'),
   webBooking: document.getElementById('s-web-booking'),
   cancellationPolicy: document.getElementById('s-cancellation-policy'),
+  offers: document.getElementById('s-offers'),
 };
 
 async function loadTenant() {
@@ -24,6 +25,7 @@ async function loadTenant() {
     setEls.whatsapp.value = tenant.whatsapp_number || '';
     setEls.webBooking.checked = tenant.web_booking_enabled;
     setEls.cancellationPolicy.value = tenant.cancellation_policy || '';
+    setEls.offers.value = tenant.offers || '';
     Api.setSession({ tenant_name: tenant.name });
   } catch (err) {
     setEls.skeleton.hidden = true;
@@ -42,6 +44,7 @@ setEls.form.addEventListener('submit', async (e) => {
     whatsapp_number: setEls.whatsapp.value.trim() || null,
     web_booking_enabled: setEls.webBooking.checked,
     cancellation_policy: setEls.cancellationPolicy.value.trim() || null,
+    offers: setEls.offers.value.trim() || null,
   };
   const btn = document.getElementById('settings-submit');
   btn.disabled = true;

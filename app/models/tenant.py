@@ -47,6 +47,10 @@ class Tenant(UUIDPKMixin, TimestampMixin, Base):
     # "Cancellation Policy" menu option). Optional — tenants that haven't
     # filled it in yet just get a generic fallback message at read time.
     cancellation_policy: Mapped[str | None] = mapped_column(Text)
+    # Free-text current offers/promotions, shown to customers via the
+    # WhatsApp bot's "Offers" menu option. Same pattern as
+    # cancellation_policy: optional, plain text, empty = nothing to show.
+    offers: Mapped[str | None] = mapped_column(Text)
     branding: Mapped[dict] = mapped_column(JSONB, default=dict)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
