@@ -97,6 +97,16 @@ def _render_main_menu(tenant_name: str) -> dict:
                         "description": "Cancel by reference number",
                     },
                     {
+                        "id": "menu_offers",
+                        "title": "\U0001f381 Offers",
+                        "description": "View current offers & promotions",
+                    },
+                    {
+                        "id": "menu_announcements",
+                        "title": "\U0001f4e2 Announcements",
+                        "description": "View latest business announcements",
+                    },
+                    {
                         "id": "menu_hours",
                         "title": "\U0001f550 Business Hours",
                         "description": "View our working hours",
@@ -105,11 +115,6 @@ def _render_main_menu(tenant_name: str) -> dict:
                         "id": "menu_policy",
                         "title": "\U0001f4c4 Cancellation Policy",
                         "description": "View our cancellation policy",
-                    },
-                    {
-                        "id": "menu_offers",
-                        "title": "\U0001f381 Offers",
-                        "description": "View current offers & promotions",
                     },
                 ],
             }
@@ -219,6 +224,26 @@ def _show_offers(tenant: Tenant) -> list:
     return [body]
 
 
+def _show_announcements(tenant: Tenant) -> list:
+    """Business-level menu option: reply with the tenant's announcements,
+    sourced from tenants.announcements — the free-text field set on the
+    admin dashboard's Business settings page. Same pattern as
+    _show_cancellation_policy/_show_offers; no DB round-trip needed since
+    `tenant` is already loaded for every incoming message."""
+    announcements_text = (tenant.announcements or "").strip()
+    if not announcements_text:
+        return [
+            f"*{tenant.name}* doesn't have any announcements right now. "
+            "Reply *menu* for other options."
+        ]
+    body = (
+        f"\U0001f4e2 *Announcements \u2014 {tenant.name}*\n\n"
+        f"{announcements_text}\n\n"
+        "Reply *menu* for other options."
+    )
+    return [body]
+
+
 async def handle_incoming_message(
     db: AsyncSession,
     tenant: Tenant,
@@ -269,31 +294,40 @@ async def _handle_main_menu(
     chose_cancel = list_reply_id == "menu_cancel" or lowered == "3" or "cancel" in lowered
     chose_hours = (
         list_reply_id == "menu_hours"
-        or lowered == "4"
+        or lowered == "6"
         or "hours" in lowered
         or "timing" in lowered
     )
     chose_policy = (
         list_reply_id == "menu_policy"
-        or lowered == "5"
+        or lowered == "7"
         or "policy" in lowered
         or "policies" in lowered
     )
     chose_offers = (
         list_reply_id == "menu_offers"
-        or lowered == "6"
+        or lowered == "4"
         or "offer" in lowered
         or "promo" in lowered
     )
+    chose_announcements = (
+        list_reply_id == "menu_announcements"
+        or lowered == "5"
+        or "announce" in lowered
+        or "notice" in lowered
+    )
+
+    if chose_offers:
+        return _show_offers(tenant)
+
+    if chose_announcements:
+        return _show_announcements(tenant)
 
     if chose_hours:
         return await _show_business_hours(db, tenant)
 
     if chose_policy:
         return _show_cancellation_policy(tenant)
-
-    if chose_offers:
-        return _show_offers(tenant)
 
     if chose_book:
         result = await db.execute(

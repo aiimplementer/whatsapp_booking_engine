@@ -51,6 +51,11 @@ class Tenant(UUIDPKMixin, TimestampMixin, Base):
     # WhatsApp bot's "Offers" menu option. Same pattern as
     # cancellation_policy: optional, plain text, empty = nothing to show.
     offers: Mapped[str | None] = mapped_column(Text)
+    # Free-text announcements (e.g. holiday closures, new services), shown
+    # to customers via the WhatsApp bot's "Announcements" menu option. Same
+    # pattern as cancellation_policy/offers: optional, plain text, empty =
+    # nothing to show.
+    announcements: Mapped[str | None] = mapped_column(Text)
     branding: Mapped[dict] = mapped_column(JSONB, default=dict)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
