@@ -22,7 +22,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.appointment import Appointment
-from app.models.scheduling import BlockedTime, Holiday, RecurringBlockedTime, SchedulingConfig
+from app.models.scheduling import BlockedTime, Holiday, RecurringBlockedTime, SchedulingConfig, Service
 
 
 @dataclass(frozen=True)
@@ -194,7 +194,19 @@ async def compute_available_slots(
     def overlaps_any(start: datetime, end: datetime, ranges) -> bool:
         return any(start < r_end and end > r_start for r_start, r_end in ranges)
 
-    slot_len = config.appointment_duration_minutes
+    # Slot length comes from the Service the customer picked, not from
+    # SchedulingConfig.appointment_duration_minutes — that config field only
+    # applies when no service is pinned (e.g. tenant-wide/WhatsApp flows
+    # without a selected service). A service's own duration is the single
+    # source of truth for how long its slots run, so it can't drift out of
+    # sync with a same-named-but-separate config field that an admin may
+    # never have set up. Working days, time windows, buffer, and the
+    # booking horizon still come from `config` as before.
+    if service_id is not None:
+        service = await db.get(Service, service_id)
+        slot_len = service.duration_minutes if service is not None else config.appointment_duration_minutes
+    else:
+        slot_len = config.appointment_duration_minutes
     step = slot_len + config.buffer_minutes
 
     slots: list[Slot] = []
