@@ -18,6 +18,7 @@ from app.schemas.appointment import (
     AppointmentOut,
     AppointmentUpdate,
 )
+from app.services.slots import validate_business_hours
 
 router = APIRouter(prefix="/api/v1/appointments", tags=["appointments"])
 
@@ -143,6 +144,18 @@ async def create_appointment(
     if body.status not in VALID_STATUSES:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid status")
 
+    tenant = await db.get(Tenant, user.tenant_id)
+    reason = await validate_business_hours(
+        db,
+        tenant_id=user.tenant_id,
+        tenant_timezone=tenant.timezone,
+        service_id=body.service_id,
+        scheduled_at=body.scheduled_at,
+        duration_minutes=body.duration_minutes,
+    )
+    if reason is not None:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=reason)
+
     appointment = Appointment(
         tenant_id=user.tenant_id,
         booking_ref=_generate_booking_ref(),
@@ -179,6 +192,23 @@ async def update_appointment(
                 status.HTTP_409_CONFLICT,
                 detail=f"Cannot move status from {appointment.status} to {new_status}",
             )
+
+    # Only re-check business hours when the reschedule actually touches
+    # when/how-long the appointment is — a pure status change (e.g.
+    # CONFIRMED -> CHECKED_IN) shouldn't be blocked by hours that were
+    # already valid when the appointment was first created.
+    if "scheduled_at" in updates or "duration_minutes" in updates:
+        tenant = await db.get(Tenant, user.tenant_id)
+        reason = await validate_business_hours(
+            db,
+            tenant_id=user.tenant_id,
+            tenant_timezone=tenant.timezone,
+            service_id=appointment.service_id,
+            scheduled_at=updates.get("scheduled_at", appointment.scheduled_at),
+            duration_minutes=updates.get("duration_minutes", appointment.duration_minutes),
+        )
+        if reason is not None:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=reason)
 
     for field, value in updates.items():
         setattr(appointment, field, value)

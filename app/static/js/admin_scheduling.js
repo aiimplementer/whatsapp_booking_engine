@@ -313,8 +313,8 @@ async function loadBlockedTimes() {
     blkList.innerHTML = blocks.length
       ? blocks
           .map((b) => {
-            const start = fmtDateTime(b.start_datetime);
-            const end = fmtDateTime(b.end_datetime);
+            const start = fmtDateTime(b.start_datetime, Api.getTenantTimezone());
+            const end = fmtDateTime(b.end_datetime, Api.getTenantTimezone());
             return `
         <div class="ledger-row" style="grid-template-columns: 200px 1fr auto;">
           <div class="slot-time">${start.date} ${start.time} → ${end.time}</div>
@@ -335,8 +335,12 @@ blkForm.addEventListener('submit', async (e) => {
   const endVal = document.getElementById('blk-end').value;
   if (!startVal || !endVal) return;
   const body = {
-    start_datetime: new Date(startVal).toISOString(),
-    end_datetime: new Date(endVal).toISOString(),
+    // See api.js zonedTimeToUtcIso for why this can't be a plain
+    // `new Date(startVal).toISOString()` — that would interpret the
+    // entered wall-clock time in the admin's own browser timezone instead
+    // of the tenant's, silently blocking the wrong hours.
+    start_datetime: zonedTimeToUtcIso(startVal, Api.getTenantTimezone()),
+    end_datetime: zonedTimeToUtcIso(endVal, Api.getTenantTimezone()),
     reason: document.getElementById('blk-reason').value.trim() || null,
   };
   try {

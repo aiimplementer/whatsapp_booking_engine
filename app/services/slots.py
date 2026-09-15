@@ -232,3 +232,67 @@ async def compute_available_slots(
         current_date += timedelta(days=1)
 
     return slots
+
+
+async def validate_business_hours(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    tenant_timezone: str,
+    service_id: uuid.UUID | None,
+    scheduled_at: datetime,
+    duration_minutes: int,
+) -> str | None:
+    """Returns None if `scheduled_at` (a UTC-aware instant) falls on a
+    working day, inside one of the configured time windows for that day,
+    and isn't a holiday — otherwise returns a short human-readable reason
+    it doesn't, for the caller to surface as an error.
+
+    Deliberately looser than matching compute_available_slots()'s exact
+    slot grid: it exists to catch clearly-wrong manual entries (e.g. an
+    admin's browser timezone silently being applied instead of the
+    tenant's — see api.js zonedTimeToUtcIso — or a fat-fingered time), not
+    to force staff onto the same rigid slot boundaries customers see on
+    the public booking page. Staff-entered appointments (phone bookings,
+    walk-ins) commonly land at times a strict slot grid wouldn't produce.
+
+    Does not check blocked times or overlap with existing appointments —
+    overlap is already enforced at the DB level via the
+    excl_appointments_no_overlap constraint, which produces a clearer,
+    more specific conflict error than duplicating that check here would.
+    """
+    config = await _load_config(db, tenant_id, service_id)
+    if config is None:
+        return "No scheduling configuration exists for this service"
+
+    tz = ZoneInfo(tenant_timezone)
+    local_start = scheduled_at.astimezone(tz)
+    local_end = local_start + timedelta(minutes=duration_minutes)
+    local_date = local_start.date()
+
+    holiday_result = await db.execute(
+        select(Holiday.id).where(Holiday.tenant_id == tenant_id, Holiday.date == local_date)
+    )
+    if holiday_result.scalar_one_or_none() is not None:
+        return f"{local_date.isoformat()} is marked as a holiday"
+
+    bit = _bit_day(local_date)
+    if not (config.working_days >> bit) & 1:
+        return f"{local_start.strftime('%A')} is not a working day"
+
+    for window in config.time_slots:
+        if window.get("day") != bit:
+            continue
+        start_h, start_m = _parse_hhmm(window["start"])
+        end_h, end_m = _parse_hhmm(window["end"])
+        window_start = local_start.replace(hour=start_h, minute=start_m, second=0, microsecond=0)
+        window_end = local_start.replace(hour=end_h, minute=end_m, second=0, microsecond=0)
+        if local_start >= window_start and local_end <= window_end:
+            return None
+
+    window_start_str = local_start.strftime("%I:%M %p").lstrip("0")
+    window_end_str = local_end.strftime("%I:%M %p").lstrip("0")
+    return (
+        f"{window_start_str}\u2013{window_end_str} on {local_date.isoformat()} "
+        "is outside working hours"
+    )

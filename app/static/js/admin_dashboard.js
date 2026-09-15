@@ -240,7 +240,15 @@ els.newForm.addEventListener('submit', async (e) => {
     customer_phone: document.getElementById('na-phone').value.trim(),
     service_id: els.serviceSelect.value || null,
     duration_minutes: Number(els.durationInput.value),
-    scheduled_at: new Date(whenLocal).toISOString(),
+    // The datetime-local input's value has no timezone info attached, so
+    // `new Date(whenLocal)` would parse it in the ADMIN'S OWN browser
+    // timezone rather than the business's — an admin entering "9:00 AM"
+    // for a tenant in a different timezone than their own would silently
+    // get a wrong appointment time (potentially outside working hours,
+    // since nothing downstream re-checks an already-computed timestamp).
+    // zonedTimeToUtcIso interprets the entered wall-clock time as being in
+    // the tenant's own timezone instead.
+    scheduled_at: zonedTimeToUtcIso(whenLocal, Api.getTenantTimezone()),
     notes: document.getElementById('na-notes').value.trim() || null,
     status: 'CONFIRMED',
   };

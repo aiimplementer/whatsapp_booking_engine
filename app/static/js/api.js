@@ -176,6 +176,44 @@ function dateKeyToUtc(key) {
   return Date.UTC(y, m - 1, d);
 }
 
+// Converts a "YYYY-MM-DDTHH:MM" wall-clock string (e.g. straight from an
+// <input type="datetime-local">) into the correct UTC ISO instant, treating
+// those numbers as a time *in `timeZone`* — NOT in the browser's own
+// timezone. This matters because a bare `new Date("2026-09-16T09:00")` is
+// parsed in the browser's local timezone per the JS spec; an admin in one
+// timezone entering "9:00 AM" for a business in a different timezone would
+// otherwise have that 9:00 AM silently reinterpreted as 9:00 AM in the
+// admin's own zone and converted from there, landing the appointment at
+// the wrong UTC instant (and therefore the wrong local time for the
+// business — including outside its working hours, since nothing else
+// down the line questions an already-computed UTC timestamp).
+//
+// Uses the standard "double formatToParts" technique: guess the UTC
+// instant using the given numbers, ask Intl what wall-clock time that
+// guess corresponds to in `timeZone`, and correct by the difference. This
+// naturally accounts for that zone's DST offset on this specific date
+// without needing a timezone database library.
+function zonedTimeToUtcIso(dateTimeLocal, timeZone) {
+  const [datePart, timePart] = dateTimeLocal.split("T");
+  const [y, m, d] = datePart.split("-").map(Number);
+  const [hh, mm] = timePart.split(":").map(Number);
+  const utcGuess = Date.UTC(y, m - 1, d, hh, mm);
+
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone, hour12: false,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+  });
+  const parts = Object.fromEntries(dtf.formatToParts(new Date(utcGuess)).map((p) => [p.type, p.value]));
+  const shownAsUtc = Date.UTC(
+    Number(parts.year), Number(parts.month) - 1, Number(parts.day),
+    // Intl can report hour "24" for midnight in hour12:false mode.
+    Number(parts.hour) === 24 ? 0 : Number(parts.hour), Number(parts.minute), Number(parts.second)
+  );
+  const diff = utcGuess - shownAsUtc;
+  return new Date(utcGuess + diff).toISOString();
+}
+
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str ?? "";

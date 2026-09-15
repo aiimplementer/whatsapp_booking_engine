@@ -79,10 +79,18 @@ let selectedServiceId = null;
 let slotsByDay = new Map();
 let selectedDayKey = null;
 let selectedSlot = null;
+// Set from the business info response in init() below. Every date/time
+// shown on this page — day tabs, slot buttons, the chosen-slot summary, and
+// the confirmation screen — must be rendered in the *business's* timezone,
+// not the customer's device/browser timezone. Otherwise a customer whose
+// phone clock is set to a different zone (travelling, misconfigured, etc.)
+// sees a shifted time and can show up at the wrong hour. tzDateKey() is the
+// same helper the admin dashboard/calendar already use for this.
+let tenantTimezone = null;
 
 function dayKey(iso) {
-  const d = new Date(iso);
-  return d.toDateString();
+  // Bucket by calendar day *in the business's timezone*, not the browser's.
+  return tzDateKey(new Date(iso), tenantTimezone);
 }
 
 function renderServices() {
@@ -147,9 +155,15 @@ async function loadSlots() {
 function renderDayTabs(keys) {
   pbEls.dayTabs.innerHTML = keys
     .map((key) => {
-      const d = new Date(key);
-      const dow = d.toLocaleDateString(undefined, { weekday: 'short' });
-      const md = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      // Format from an actual slot's timestamp in this group (with an
+      // explicit timeZone), rather than re-parsing the "YYYY-MM-DD" key as
+      // a Date — reconstructing from the key string treats it as UTC
+      // midnight, which can roll to the previous calendar day once
+      // formatted back out for timezones west of UTC.
+      const sampleIso = slotsByDay.get(key)[0].scheduled_at;
+      const d = new Date(sampleIso);
+      const dow = d.toLocaleDateString(undefined, { weekday: 'short', timeZone: tenantTimezone });
+      const md = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: tenantTimezone });
       return `<div class="day-tab ${key === selectedDayKey ? 'selected' : ''}" data-day="${key}">
         <span class="dow">${dow}</span>${md}
       </div>`;
@@ -175,7 +189,11 @@ function renderSlotGrid() {
       // to the device's clock-format setting (many Android phones default
       // to 24-hour time regardless of locale), which is why slots showed
       // "14:00" on mobile but "2:00 PM" on desktop for the same booking.
-      const t = new Date(s.scheduled_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true });
+      // timeZone forced to the business's timezone for the same reason —
+      // otherwise the customer's own device clock/timezone decides what
+      // hour is shown, which can silently disagree with the business's
+      // actual opening hours.
+      const t = new Date(s.scheduled_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: tenantTimezone });
       return `<button type="button" class="slot-btn" data-iso="${s.scheduled_at}" data-duration="${s.duration_minutes}">${t}</button>`;
     })
     .join('');
@@ -187,7 +205,7 @@ pbEls.slotGrid.addEventListener('click', (e) => {
   document.querySelectorAll('.slot-btn').forEach((b) => b.classList.remove('selected'));
   btn.classList.add('selected');
   selectedSlot = { iso: btn.dataset.iso, duration: Number(btn.dataset.duration) };
-  const { date, time } = fmtDateTime(selectedSlot.iso);
+  const { date, time } = fmtDateTime(selectedSlot.iso, tenantTimezone);
   const svcName = selectedServiceId ? services.find((s) => s.id === selectedServiceId)?.name : null;
   pbEls.chosenSummary.textContent = `${svcName ? svcName + ' — ' : ''}${date} at ${time} (${selectedSlot.duration} min)`;
   pbEls.sideTime.textContent = `${date} at ${time}`;
@@ -209,7 +227,7 @@ pbEls.bookingForm.addEventListener('submit', async (e) => {
     scheduled_at: selectedSlot.iso,
     notes: document.getElementById('b-notes').value.trim() || null,
   };
-  const { date, time } = fmtDateTime(selectedSlot.iso);
+  const { date, time } = fmtDateTime(selectedSlot.iso, tenantTimezone);
   const svcName = selectedServiceId ? services.find((s) => s.id === selectedServiceId)?.name : null;
   const confirmMsg =
     `Book this appointment?\n\n` +
@@ -222,7 +240,7 @@ pbEls.bookingForm.addEventListener('submit', async (e) => {
   try {
     const booking = await api('/appointments', { method: 'POST', body });
     pbEls.confRef.textContent = booking.booking_ref;
-    const { date, time } = fmtDateTime(booking.scheduled_at);
+    const { date, time } = fmtDateTime(booking.scheduled_at, tenantTimezone);
     pbEls.confWhen.textContent = `${date} at ${time} — ${statusLabel(booking.status)}`;
     pbEls.confDetails.textContent = `${booking.customer_name} · ${body.customer_phone}`;
     pbEls.stepConfirmation.classList.remove('hidden');
@@ -244,7 +262,7 @@ pbEls.lookupForm.addEventListener('submit', async (e) => {
   pbEls.lookupResult.innerHTML = '<span class="muted">Looking up…</span>';
   try {
     const booking = await api(`/appointments/${encodeURIComponent(ref)}?customer_phone=${encodeURIComponent(phone)}`);
-    const { date, time } = fmtDateTime(booking.scheduled_at);
+    const { date, time } = fmtDateTime(booking.scheduled_at, tenantTimezone);
     const cancellable = ['PENDING', 'CONFIRMED'].includes(booking.status);
     pbEls.lookupResult.innerHTML = `
       <div class="ledger-row" style="grid-template-columns: 1fr auto;">
@@ -342,6 +360,9 @@ function renderCancellationPolicyToggle(info) {
 async function init() {
   try {
     const info = await api('');
+    // Must be set before loadSlots()/renderDayTabs()/renderSlotGrid() run,
+    // since all of them format times in this zone.
+    tenantTimezone = info.timezone;
     pbEls.loadError.classList.add('hidden');
     pbEls.root.classList.remove('hidden');
     pbEls.bizName.textContent = info.name;
