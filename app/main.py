@@ -30,6 +30,10 @@ async def health_check():
         await conn.execute(text("SELECT 1"))
     return {"status": "ok"}
 
+@app.head("/health")
+async def health_head():
+    async with engine.connect() as conn:
+        await conn.execute(text("SELECT 1"))
 
 # Not yet built:
 # - The nightly job that populates `available_slots` as a read cache. It
