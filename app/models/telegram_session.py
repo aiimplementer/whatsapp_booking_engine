@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -33,6 +33,14 @@ class TelegramSession(UUIDPKMixin, Base):
     # WhatsApp side does for phone numbers) since we only ever use it as an
     # opaque identifier to send replies back to, never do arithmetic on it.
     customer_chat_id: Mapped[str] = mapped_column(String(32))
+    # The customer's real phone number, captured once via the bot's native
+    # "share contact" button (the AWAIT_CONTACT step in
+    # app/services/whatsapp_bot.py). NULL until then. Persisted here — as
+    # opposed to `temp_data`, which is cleared back to `{}` after every
+    # booking — so it survives across conversations and keeps scoping this
+    # customer's bookings once known. See the `customer_phone` property
+    # below for how this is used.
+    verified_phone: Mapped[str | None] = mapped_column(String(20))
     current_step: Mapped[str] = mapped_column(String(50), default="MAIN_MENU")
     temp_data: Mapped[dict] = mapped_column(JSONB, default=dict)
     last_activity: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -40,6 +48,10 @@ class TelegramSession(UUIDPKMixin, Base):
 
     __table_args__ = (
         UniqueConstraint("tenant_id", "customer_chat_id", name="uq_telegram_sessions_tenant_chat"),
+        CheckConstraint(
+            r"verified_phone IS NULL OR verified_phone ~ '^\+?[0-9]{7,15}$'",
+            name="chk_telegram_sessions_verified_phone_format",
+        ),
     )
 
     @property
@@ -51,14 +63,18 @@ class TelegramSession(UUIDPKMixin, Base):
         it on a new Appointment, and filtering existing Appointments by it
         for the "look up my booking" / "cancel my booking" flows — and does
         so consistently (always the same attribute, both writing and
-        reading), so aliasing it to the Telegram chat id here is enough:
-        an appointment booked over Telegram gets `customer_phone` set to
-        the customer's chat id, and later lookups from that same chat id
-        filter on the same value, exactly mirroring how a WhatsApp
-        customer's phone number scopes their own bookings.
+        reading).
+
+        Returns the customer's verified real phone number once they've
+        shared it (matching `Appointment.customer_phone`, which is what
+        `_finalize_booking` now writes for Telegram bookings too — the same
+        column WhatsApp has always used, no separate column needed). Falls
+        back to the chat id only before any contact has ever been shared
+        (e.g. an appointment booked before this behavior existed), so old
+        bookings made under the chat id remain look-up-able until the
+        customer shares their contact again.
 
         Not a mapped column — this is a read-only Python property, so it
-        adds no schema and touches nothing on the whatsapp_sessions/
-        Appointment side.
+        adds no schema and touches nothing on the whatsapp_sessions side.
         """
-        return self.customer_chat_id
+        return self.verified_phone or self.customer_chat_id

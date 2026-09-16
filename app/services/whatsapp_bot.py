@@ -29,7 +29,10 @@ already the customer's real number, so a WhatsAppSession finalizes the
 booking straight after AWAIT_NAME, exactly as before. A Telegram session is
 detected by duck-typing on `customer_chat_id` (an attribute only
 TelegramSession has) rather than importing that model here, so this file
-stays channel-agnostic and nothing changes for WhatsApp.
+stays channel-agnostic and nothing changes for WhatsApp. Once a Telegram
+customer shares their contact in AWAIT_CONTACT, that verified number is
+what gets written to `customer_phone` on the appointment — the same column
+WhatsApp uses — so both channels store the same kind of value there.
 
 Features:
 - 7-day date grouping with forward/backward navigation
@@ -774,6 +777,15 @@ async def _handle_await_contact(
             _render_contact_request(),
         ]
 
+    # Persist onto the session (not just temp_data, which _reset() clears)
+    # so the "look up/cancel my booking" flow — which filters on
+    # `Appointment.customer_phone == session.customer_phone` — keeps
+    # matching this customer's bookings by their real number on every
+    # future visit to this chat, not just this one. Only TelegramSession
+    # ever reaches this handler (see _channel_requires_contact_share), and
+    # only it defines `verified_phone`.
+    session.verified_phone = phone
+
     return await _finalize_booking(db, tenant, session, name, contact_phone=phone)
 
 
@@ -785,12 +797,18 @@ async def _finalize_booking(
     contact_phone: str | None = None,
 ) -> list[str]:
     """Creates and confirms the appointment. `contact_phone`, when given, is
-    a Telegram customer's verified number (from AWAIT_CONTACT) and is stored
-    only in the additive `telegram_contact_phone` column — `customer_phone`
-    keeps holding whatever it always has for this session (the real number
-    for WhatsApp, the chat id for Telegram), so the reference-lookup/cancel
-    flows above, which filter on `Appointment.customer_phone ==
-    session.customer_phone`, are completely unaffected.
+    a Telegram customer's verified number (from AWAIT_CONTACT) and is what
+    gets stored in `customer_phone` — the same column WhatsApp has always
+    used, so a Telegram booking's `customer_phone` now holds the customer's
+    real number exactly like a WhatsApp booking's does, with no separate
+    column needed. (By the time this runs, `session.verified_phone` — see
+    `_handle_await_contact` — already matches `contact_phone`, so
+    `session.customer_phone` would resolve to the same value; passing
+    `contact_phone` through explicitly just avoids relying on that
+    ordering.) The reference-lookup/cancel flows above, which filter on
+    `Appointment.customer_phone == session.customer_phone`, keep working
+    because `TelegramSession.customer_phone` now resolves to that same
+    verified number too.
     """
     data = session.temp_data
     scheduled_at = datetime.fromisoformat(data["chosen_slot"])
@@ -798,14 +816,12 @@ async def _finalize_booking(
         tenant_id=tenant.id,
         service_id=data["service_id"],
         customer_name=name,
-        customer_phone=session.customer_phone,
+        customer_phone=contact_phone or session.customer_phone,
         scheduled_at=scheduled_at,
         duration_minutes=data["duration_minutes"],
         status="CONFIRMED",
         booking_ref=_generate_booking_ref(),
     )
-    if contact_phone:
-        appointment.telegram_contact_phone = contact_phone
     db.add(appointment)
     from sqlalchemy.exc import IntegrityError
 
