@@ -84,7 +84,7 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
   btn.disabled = true;
   btn.textContent = 'Creating…';
   try {
-    const data = await Api.post('/api/v1/auth/signup', body);
+    const data = await Api.post('/api/v1/auth/signup', body, { auth: false });
     Api.setSession({
       access_token: data.access_token,
       refresh_token: data.refresh_token,

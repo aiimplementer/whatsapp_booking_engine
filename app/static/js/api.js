@@ -110,7 +110,13 @@ const Api = (() => {
   }
 
   const get = (path) => request(path, { method: "GET" });
-  const post = (path, body) => request(path, { method: "POST", body });
+  // Third arg lets callers opt out of the auth/refresh-retry machinery —
+  // needed for login/signup, which have no access token to send and no
+  // session to refresh: without it, a plain 401 "Invalid credentials" gets
+  // swallowed by the refresh-then-redirect branch above and reported as
+  // "Session expired" instead, with a page navigation wiping the banner
+  // almost as soon as it's shown.
+  const post = (path, body, opts = {}) => request(path, { method: "POST", body, ...opts });
   const patch = (path, body) => request(path, { method: "PATCH", body });
   const put = (path, body) => request(path, { method: "PUT", body });
   const del = (path) => request(path, { method: "DELETE" });
