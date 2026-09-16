@@ -157,8 +157,19 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
         raise invalid_creds
 
     async for tenant_db in get_db_for_tenant(str(tenant.id)):
+        # tenant_id is filtered explicitly here, not left to RLS alone: email
+        # is only unique per (tenant_id, email) — see uq_tenant_users_tenant_email
+        # — so the same email can exist under a different tenant. RLS (via
+        # get_db_for_tenant's session variable) is still in place as
+        # defense-in-depth, but this endpoint is the login boundary itself,
+        # so it must not depend solely on the DB role never bypassing RLS
+        # (e.g. a table-owner connection silently ignores RLS policies
+        # unless FORCE ROW LEVEL SECURITY is set on the table).
         result = await tenant_db.execute(
-            select(TenantUser).where(TenantUser.email == body.email)
+            select(TenantUser).where(
+                TenantUser.tenant_id == tenant.id,
+                TenantUser.email == body.email,
+            )
         )
         user = result.scalar_one_or_none()
         if user is None or not verify_password(body.password, user.password_hash):
