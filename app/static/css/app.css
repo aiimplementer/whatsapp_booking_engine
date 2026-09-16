@@ -483,6 +483,57 @@ input[type="radio"] {
   margin-right: 0.4rem;
 }
 
+/* ---- toasts ------------------------------------------------------------
+   toast() in api.js appends #toast-stack/.toast elements to the page on
+   every save/delete/error across the app (appointments, services, staff,
+   scheduling, customers) — but nothing here ever styled or positioned
+   them, so they rendered as bare unstyled blocks wherever they fell in
+   normal page flow (usually off-screen below the fold) and vanished 4.2s
+   later. That's why actions like saving an appointment showed no visible
+   confirmation. Fixed position + stacking makes them behave like a real
+   toast notification instead of invisible DOM noise. */
+#toast-stack {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.5rem;
+  max-width: min(360px, calc(100vw - 2rem));
+  pointer-events: none;
+}
+
+.toast {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-card);
+  pointer-events: auto;
+  animation: toast-in 180ms ease-out;
+}
+
+.toast-ok { background: var(--sage-soft); border-color: var(--sage); }
+.toast-error { background: var(--coral-soft); border-color: var(--coral); }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+  #toast-stack {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    max-width: none;
+  }
+}
+
 /* ---- banners --------------------------------------------------------------- */
 
 .banner {

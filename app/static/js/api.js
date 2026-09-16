@@ -135,7 +135,11 @@ function toast(message, kind = "ok") {
   el.className = `toast toast-${kind}`;
   el.textContent = message;
   stack.appendChild(el);
-  setTimeout(() => el.remove(), 4200);
+  setTimeout(() => {
+    el.style.transition = "opacity 150ms ease-in";
+    el.style.opacity = "0";
+    setTimeout(() => el.remove(), 150);
+  }, 4200);
 }
 
 function showBanner(el, message) {
