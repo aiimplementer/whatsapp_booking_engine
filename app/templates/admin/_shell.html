@@ -51,14 +51,30 @@
 {% block scripts %}
 <script>
   if (!Api.requireAuth()) { /* redirected */ }
-  document.getElementById('sidebar-tenant-name').textContent = Api.getTenantName() || 'Your business';
-  document.getElementById('sidebar-tenant-slug').textContent = Api.getTenantSlug() ? '/' + Api.getTenantSlug() : '';
+  const sidebarNameEl = document.getElementById('sidebar-tenant-name');
+  const sidebarSlugEl = document.getElementById('sidebar-tenant-slug');
+  const bookingLink = document.getElementById('nav-booking-link');
+  function renderTenant(name, slug) {
+    sidebarNameEl.textContent = name || 'Your business';
+    sidebarSlugEl.textContent = slug ? '/' + slug : '';
+    if (bookingLink && slug) {
+      bookingLink.href = `/book/${slug}`;
+      bookingLink.target = '_blank';
+    }
+  }
+  // Cached render first, purely for instant paint before the fetch below
+  // resolves — this is the only place the cached slug is still trusted.
+  renderTenant(Api.getTenantName(), Api.getTenantSlug());
   // Re-fetch the tenant record too (not just cached signup/login-time data)
   // so a timezone change made in Business settings takes effect on the very
-  // next page load, without waiting for a re-login.
+  // next page load, without waiting for a re-login. This also self-heals
+  // tenant_slug, which previously stayed frozen at whatever was typed at
+  // the last login/signup and was never refreshed from the server — so a
+  // slug change (or a stale browser) kept showing a dead booking link
+  // indefinitely.
   Api.get('/api/v1/tenants/me').then((tenant) => {
-    Api.setSession({ tenant_name: tenant.name, tenant_timezone: tenant.timezone });
-    document.getElementById('sidebar-tenant-name').textContent = tenant.name;
+    Api.setSession({ tenant_name: tenant.name, tenant_timezone: tenant.timezone, tenant_slug: tenant.slug });
+    renderTenant(tenant.name, tenant.slug);
   }).catch(() => { /* keep whatever was cached */ });
   const emailEl = document.getElementById('header-user-email');
   const roleEl = document.getElementById('header-user-role');
@@ -79,11 +95,6 @@
     Api.setSession({ role: me.role, email: me.email });
     renderUser(me.email, me.role);
   }).catch(() => { /* keep whatever was cached */ });
-  const bookingLink = document.getElementById('nav-booking-link');
-  if (bookingLink && Api.getTenantSlug()) {
-    bookingLink.href = `/book/${Api.getTenantSlug()}`;
-    bookingLink.target = '_blank';
-  }
   document.getElementById('nav-logout').addEventListener('click', (e) => {
     e.preventDefault();
     Api.clearSession();
