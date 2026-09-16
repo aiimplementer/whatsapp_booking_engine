@@ -41,3 +41,24 @@ class TelegramSession(UUIDPKMixin, Base):
     __table_args__ = (
         UniqueConstraint("tenant_id", "customer_chat_id", name="uq_telegram_sessions_tenant_chat"),
     )
+
+    @property
+    def customer_phone(self) -> str:
+        """Alias so this object duck-types the same as WhatsAppSession for
+        `app.services.whatsapp_bot`'s purposes.
+
+        That module reads `session.customer_phone` in three places — storing
+        it on a new Appointment, and filtering existing Appointments by it
+        for the "look up my booking" / "cancel my booking" flows — and does
+        so consistently (always the same attribute, both writing and
+        reading), so aliasing it to the Telegram chat id here is enough:
+        an appointment booked over Telegram gets `customer_phone` set to
+        the customer's chat id, and later lookups from that same chat id
+        filter on the same value, exactly mirroring how a WhatsApp
+        customer's phone number scopes their own bookings.
+
+        Not a mapped column — this is a read-only Python property, so it
+        adds no schema and touches nothing on the whatsapp_sessions/
+        Appointment side.
+        """
+        return self.customer_chat_id
