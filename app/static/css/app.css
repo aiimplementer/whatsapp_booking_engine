@@ -578,6 +578,17 @@ input[type="radio"] {
 
 /* ---- tables ---------------------------------------------------------------- */
 
+/* Referenced up in the body{overflow-x:hidden} comment as one of the inner
+   scrollers, but the rule itself was never written — so on phones the table
+   had no min-width:0/overflow-x of its own, the panel/grid blew out to the
+   table's intrinsic width, and body's overflow-x:hidden just clipped the
+   extra columns off the right edge instead of letting you scroll to them. */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  min-width: 0;
+}
+
 table { width: 100%; border-collapse: collapse; }
 table th, table td {
   text-align: left;
