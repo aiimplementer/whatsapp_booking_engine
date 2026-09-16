@@ -9,3 +9,5 @@ from app.models.scheduling import Service, SchedulingConfig, Holiday, BlockedTim
 from app.models.appointment import Appointment, AvailableSlot  # noqa: F401
 from app.models.whatsapp_session import WhatsAppSession  # noqa: F401
 from app.models.audit_log import AuditLog  # noqa: F401
+from app.models.telegram_config import TelegramConfig  # noqa: F401
+from app.models.telegram_session import TelegramSession  # noqa: F401

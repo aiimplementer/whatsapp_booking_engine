@@ -1309,3 +1309,29 @@ table.sheet tr:last-child td { border-bottom: none; }
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
+
+/* ---- connector status pill (Telegram settings widget) --------------------- */
+/* Small standalone addition — not used anywhere else yet, so it's appended
+   here rather than folded into an existing section. */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+.status-pill::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+.status-pill-ok {
+  background: var(--sage-soft);
+  border-color: var(--sage);
+  color: var(--sage);
+}

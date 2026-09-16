@@ -37,6 +37,18 @@ class Settings(BaseSettings):
     platform_admin_username: str = "platform-admin"
     platform_admin_password_hash: str = ""
 
+    # --- Telegram Bot API connector (additive; independent of WhatsApp) ---
+    # Optional shared secret Telegram echoes back in the
+    # X-Telegram-Bot-Api-Secret-Token header on every webhook POST, if set
+    # here and passed to setWebhook. See app/services/telegram_client.py for
+    # why this is optional (the per-tenant bot_token in the webhook path is
+    # the primary secret).
+    telegram_webhook_secret: str = ""
+    # Public base URL of this deployment (e.g. "https://mybooking.app"),
+    # used only to auto-register a tenant's webhook URL with Telegram at
+    # /connect time. If left blank, /connect still saves the bot token but
+    # the admin (or the tenant) must call Telegram's setWebhook manually.
+    public_base_url: str = ""
 
 
 settings = Settings()

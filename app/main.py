@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from app.database import engine
-from app.routers import appointments, appointments_slots_endpoint, auth, customers, platform_admin, public, scheduling, tenants, whatsapp
+from app.routers import appointments, appointments_slots_endpoint, auth, customers, platform_admin, public, scheduling, telegram, tenants, whatsapp
 from app import web
 
 app = FastAPI(title="WhatsApp Appointment Booking Engine")
@@ -25,6 +25,7 @@ app.include_router(appointments.router)
 app.include_router(customers.router)
 app.include_router(public.router)
 app.include_router(whatsapp.router)
+app.include_router(telegram.router)
 app.include_router(platform_admin.auth_router)
 app.include_router(platform_admin.router)
 

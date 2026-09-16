@@ -81,8 +81,40 @@
     <button class="btn" type="submit" id="settings-submit">Save changes</button>
   </form>
 </div>
+
+<div class="panel narrow" style="max-width: 720px; margin-top: 1.5rem;">
+  <div id="telegram-banner" class="banner banner-error" hidden></div>
+  <div id="telegram-ok" class="banner banner-success" hidden></div>
+  <fieldset>
+    <legend>Telegram bot</legend>
+    <p class="field-hint" style="margin-top:-.25rem;">
+      A second booking channel alongside WhatsApp. Create a bot via
+      <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a>
+      on Telegram, then paste its token below.
+    </p>
+
+    <div id="telegram-skeleton" class="skeleton">Loading…</div>
+
+    <div id="telegram-disconnected" class="hidden">
+      <div class="field">
+        <label for="tg-token">Bot token</label>
+        <input type="text" id="tg-token" placeholder="123456789:AAH-your-bot-token" autocomplete="off" />
+      </div>
+      <button type="button" class="btn" id="tg-connect-btn" style="margin-top:.75rem;">Connect bot</button>
+    </div>
+
+    <div id="telegram-connected" class="hidden">
+      <div class="row">
+        <span class="status-pill status-pill-ok">Connected</span>
+        <span id="tg-username" class="field-hint" style="margin:0;"></span>
+      </div>
+      <button type="button" class="btn btn-danger btn-sm" id="tg-disconnect-btn" style="margin-top:.75rem;">Disconnect</button>
+    </div>
+  </fieldset>
+</div>
 {% endblock %}
 {% block admin_scripts %}
 <script src="/static/js/timezones.js"></script>
 <script src="/static/js/admin_settings.js"></script>
+<script src="/static/js/admin_telegram.js"></script>
 {% endblock %}
