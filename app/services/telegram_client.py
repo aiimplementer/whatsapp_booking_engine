@@ -66,9 +66,48 @@ async def get_me(bot_token: str) -> dict:
     return data["result"]
 
 
-async def send_text_message(*, bot_token: str, chat_id: str, body: str) -> dict:
+async def send_text_message(
+    *, bot_token: str, chat_id: str, body: str, remove_keyboard: bool = False
+) -> dict:
     url = f"{API_BASE}/bot{bot_token}/sendMessage"
     payload = {"chat_id": chat_id, "text": body}
+    if remove_keyboard:
+        # Dismisses the custom "share contact" reply keyboard once it's no
+        # longer needed. Defaults to False, so every existing call site
+        # (including the admin /send test endpoint) behaves exactly as
+        # before unless the caller opts in.
+        payload["reply_markup"] = {"remove_keyboard": True}
+    async with httpx.AsyncClient(timeout=15) as client:
+        resp = await client.post(url, json=payload)
+    data = resp.json()
+    if resp.status_code >= 400 or not data.get("ok"):
+        raise TelegramSendError(resp.status_code, resp.text)
+    return data
+
+
+async def send_contact_request(
+    *, bot_token: str, chat_id: str, body_text: str, button_text: str
+) -> dict:
+    """Prompts the customer to share their phone number via Telegram's
+    native "request contact" reply-keyboard button. Because the number
+    comes back verified straight from Telegram (rather than typed by the
+    customer), we never have to parse or validate it ourselves — see
+    app/services/whatsapp_bot.py's AWAIT_CONTACT step.
+
+    This is a plain (non-inline) reply keyboard — a different mechanism
+    from send_inline_keyboard's callback-data buttons above, since
+    `request_contact` is only supported on this kind of keyboard.
+    """
+    url = f"{API_BASE}/bot{bot_token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": body_text,
+        "reply_markup": {
+            "keyboard": [[{"text": button_text, "request_contact": True}]],
+            "resize_keyboard": True,
+            "one_time_keyboard": True,
+        },
+    }
     async with httpx.AsyncClient(timeout=15) as client:
         resp = await client.post(url, json=payload)
     data = resp.json()

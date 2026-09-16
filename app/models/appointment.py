@@ -27,6 +27,19 @@ class Appointment(UUIDPKMixin, TimestampMixin, Base):
     customer_name: Mapped[str] = mapped_column(String(150))
     customer_phone: Mapped[str] = mapped_column(String(20))
     customer_email: Mapped[str | None] = mapped_column(String(255))
+    # Verified phone number shared by a Telegram customer via the bot's
+    # native "request contact" button (see app/services/whatsapp_bot.py's
+    # AWAIT_CONTACT step). Deliberately a separate, nullable column rather
+    # than reusing `customer_phone`: for Telegram, `customer_phone` still
+    # holds the chat id, exactly as before, because the "look up/cancel my
+    # booking" flow scopes results with
+    # `Appointment.customer_phone == session.customer_phone` (chat id for
+    # Telegram, real phone for WhatsApp) — overwriting it would silently
+    # break that lookup. This column is purely additive: NULL for every
+    # WhatsApp booking and for any Telegram booking made before this field
+    # existed, and never read by the WhatsApp flow, the public API, or the
+    # admin dashboard.
+    telegram_contact_phone: Mapped[str | None] = mapped_column(String(20))
     scheduled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     duration_minutes: Mapped[int] = mapped_column(Integer)
 
@@ -49,6 +62,10 @@ class Appointment(UUIDPKMixin, TimestampMixin, Base):
         CheckConstraint("duration_minutes > 0", name="chk_appt_duration_positive"),
         CheckConstraint(
             r"customer_phone ~ '^\+?[0-9]{7,15}$'", name="chk_appt_phone_format"
+        ),
+        CheckConstraint(
+            r"telegram_contact_phone IS NULL OR telegram_contact_phone ~ '^\+?[0-9]{7,15}$'",
+            name="chk_appt_telegram_contact_phone_format",
         ),
         # Declared here so Alembic's autogenerate recognizes it as already present
         # (it was created by 001_init_schema.sql, not by this ORM layer) rather

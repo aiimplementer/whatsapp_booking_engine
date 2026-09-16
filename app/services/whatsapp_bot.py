@@ -11,13 +11,25 @@ the Cloud API to send those replies.
 Replies are either:
   - a plain str -> sent as a text message, or
   - a dict {"type": "interactive_list", "body_text", "button_text", "sections"}
-    -> sent as a WhatsApp interactive list message (see whatsapp_client.send_interactive_list)
+    -> sent as a WhatsApp interactive list message (see whatsapp_client.send_interactive_list), or
+  - a dict {"type": "request_contact", "body_text", "button_text"}
+    -> Telegram-only: rendered as a native "share contact" keyboard button
+       (see telegram_client.send_contact_request). No WhatsApp equivalent
+       exists, so this is never produced for a WhatsAppSession.
 
 Every list-driven step also accepts the old plain-text numeric reply (e.g. "1",
 "2", ...) as a fallback, since not every WhatsApp client renders lists the
 same way and customers sometimes just type the number they see.
 
-Steps: MAIN_MENU -> AWAIT_SERVICE -> AWAIT_DATE -> AWAIT_TIME -> AWAIT_NAME -> (booked, back to MAIN_MENU)
+Steps: MAIN_MENU -> AWAIT_SERVICE -> AWAIT_DATE -> AWAIT_TIME -> AWAIT_NAME ->
+    [AWAIT_CONTACT, Telegram sessions only] -> (booked, back to MAIN_MENU)
+
+AWAIT_CONTACT only ever runs for Telegram: WhatsApp's `customer_phone` is
+already the customer's real number, so a WhatsAppSession finalizes the
+booking straight after AWAIT_NAME, exactly as before. A Telegram session is
+detected by duck-typing on `customer_chat_id` (an attribute only
+TelegramSession has) rather than importing that model here, so this file
+stays channel-agnostic and nothing changes for WhatsApp.
 
 Features:
 - 7-day date grouping with forward/backward navigation
@@ -56,6 +68,30 @@ def _generate_booking_ref() -> str:
 def _reset(session: WhatsAppSession) -> None:
     session.current_step = "MAIN_MENU"
     session.temp_data = {}
+
+
+def _channel_requires_contact_share(session: WhatsAppSession) -> bool:
+    """True only for Telegram sessions.
+
+    Detected by duck-typing on `customer_chat_id` — an attribute only
+    TelegramSession defines (see its docstring) — rather than importing
+    TelegramSession here, so this module never gains a WhatsApp-specific or
+    Telegram-specific import and stays a single shared state machine. A
+    WhatsAppSession never has this attribute, so this always returns False
+    for it and the WhatsApp flow is completely unaffected.
+    """
+    return hasattr(session, "customer_chat_id")
+
+
+def _render_contact_request() -> dict:
+    return {
+        "type": "request_contact",
+        "body_text": (
+            "One last thing \u2014 please share your contact number so we can "
+            "confirm your appointment. Tap the button below."
+        ),
+        "button_text": "\U0001f4de Share Contact",
+    }
 
 
 def _choice_index(text: str, list_reply_id: str | None, prefix: str) -> int | None:
@@ -221,7 +257,16 @@ async def handle_incoming_message(
     session: WhatsAppSession,
     text: str,
     list_reply_id: str | None = None,
+    contact: dict | None = None,
 ) -> list:
+    """`contact`, when provided, is a Telegram-only, already-verified
+    `{"phone_number": ...}` payload (see routers/telegram.py) confirming the
+    customer tapped the native "share contact" button. It's `None` for
+    every WhatsApp call site (that router doesn't pass it) and for every
+    Telegram update that isn't a shared contact, so this new parameter
+    changes nothing for WhatsApp or for any Telegram step other than
+    AWAIT_CONTACT.
+    """
     text = (text or "").strip()
     lowered = text.lower()
 
@@ -241,6 +286,8 @@ async def handle_incoming_message(
         return await _handle_await_time(db, tenant, session, text, list_reply_id)
     if session.current_step == "AWAIT_NAME":
         return await _handle_await_name(db, tenant, session, text)
+    if session.current_step == "AWAIT_CONTACT":
+        return await _handle_await_contact(db, tenant, session, contact)
 
     # Unknown/stale step — don't get the customer stuck.
     _reset(session)
@@ -689,11 +736,62 @@ async def _handle_await_time(
 
 async def _handle_await_name(
     db: AsyncSession, tenant: Tenant, session: WhatsAppSession, text: str
-) -> list[str]:
+) -> list:
     name = text.strip()
     if not name:
         return ["Please send a name for the booking."]
 
+    if _channel_requires_contact_share(session):
+        # Telegram only (see _channel_requires_contact_share): hold the name
+        # and ask for a verified contact number before finalizing anything.
+        # WhatsApp sessions never take this branch, so their behavior below
+        # (finalize immediately) is unchanged.
+        session.temp_data = {**session.temp_data, "pending_name": name}
+        session.current_step = "AWAIT_CONTACT"
+        return [_render_contact_request()]
+
+    return await _finalize_booking(db, tenant, session, name)
+
+
+async def _handle_await_contact(
+    db: AsyncSession, tenant: Tenant, session: WhatsAppSession, contact: dict | None
+) -> list:
+    name = session.temp_data.get("pending_name")
+    if not name:
+        # Stale/unexpected state — don't leave the customer stuck here.
+        _reset(session)
+        return [_render_main_menu(tenant.name)]
+
+    phone = (contact or {}).get("phone_number")
+    if not phone:
+        # Permission denied / declined (typed a message, dismissed the
+        # keyboard, or shared a contact that wasn't verified as their own —
+        # see routers/telegram.py). Per requirement: never save or confirm
+        # the appointment without it, and stay on this step so a retry with
+        # the button still works.
+        return [
+            "This appointment can't be confirmed without your contact number.",
+            _render_contact_request(),
+        ]
+
+    return await _finalize_booking(db, tenant, session, name, contact_phone=phone)
+
+
+async def _finalize_booking(
+    db: AsyncSession,
+    tenant: Tenant,
+    session: WhatsAppSession,
+    name: str,
+    contact_phone: str | None = None,
+) -> list[str]:
+    """Creates and confirms the appointment. `contact_phone`, when given, is
+    a Telegram customer's verified number (from AWAIT_CONTACT) and is stored
+    only in the additive `telegram_contact_phone` column — `customer_phone`
+    keeps holding whatever it always has for this session (the real number
+    for WhatsApp, the chat id for Telegram), so the reference-lookup/cancel
+    flows above, which filter on `Appointment.customer_phone ==
+    session.customer_phone`, are completely unaffected.
+    """
     data = session.temp_data
     scheduled_at = datetime.fromisoformat(data["chosen_slot"])
     appointment = Appointment(
@@ -706,6 +804,8 @@ async def _handle_await_name(
         status="CONFIRMED",
         booking_ref=_generate_booking_ref(),
     )
+    if contact_phone:
+        appointment.telegram_contact_phone = contact_phone
     db.add(appointment)
     from sqlalchemy.exc import IntegrityError
 

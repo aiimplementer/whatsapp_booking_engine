@@ -36,6 +36,7 @@ from app.services.telegram_client import (
     answer_callback_query,
     delete_webhook,
     get_me,
+    send_contact_request,
     send_inline_keyboard,
     send_text_message,
     set_webhook,
@@ -78,10 +79,22 @@ async def _process_update(bot_token: str, update: dict) -> None:
     text: str | None = None
     callback_data: str | None = None
     callback_query_id: str | None = None
+    contact: dict | None = None
 
     if message is not None:
         chat_id = str(message.get("chat", {}).get("id"))
         text = message.get("text", "")
+        raw_contact = message.get("contact")
+        if raw_contact is not None:
+            # Only trust a contact as "the customer's own verified number"
+            # if its user_id matches whoever sent this message. Telegram
+            # guarantees that match when the customer taps our
+            # request_contact button; it can differ if they instead shared
+            # someone else's contact card manually, which we don't want to
+            # accept as their own number.
+            sender_id = message.get("from", {}).get("id")
+            if raw_contact.get("user_id") == sender_id and raw_contact.get("phone_number"):
+                contact = {"phone_number": raw_contact["phone_number"]}
     elif callback_query is not None:
         chat_id = str(callback_query.get("message", {}).get("chat", {}).get("id"))
         callback_data = callback_query.get("data")
@@ -92,7 +105,7 @@ async def _process_update(bot_token: str, update: dict) -> None:
 
     if not chat_id or chat_id == "None":
         return
-    if not text and not callback_data:
+    if not text and not callback_data and not contact:
         return
 
     # Tenant lookup by bot_token, same shape as the WhatsApp webhook's
@@ -131,7 +144,14 @@ async def _process_update(bot_token: str, update: dict) -> None:
             db.add(session)
             await db.flush()
 
-        replies = await handle_incoming_message(db, tenant, session, text or "", callback_data)
+        was_awaiting_contact = session.current_step == "AWAIT_CONTACT"
+        replies = await handle_incoming_message(
+            db, tenant, session, text or "", callback_data, contact=contact
+        )
+        # Once the customer has moved past AWAIT_CONTACT (booking confirmed,
+        # or reset via "menu"), dismiss the "share contact" reply keyboard
+        # left over from that step so it doesn't linger on screen.
+        clear_contact_keyboard = was_awaiting_contact and session.current_step != "AWAIT_CONTACT"
         await db.commit()
         break
 
@@ -151,8 +171,20 @@ async def _process_update(bot_token: str, update: dict) -> None:
                     button_text=reply["button_text"],
                     sections=reply["sections"],
                 )
+            elif isinstance(reply, dict) and reply.get("type") == "request_contact":
+                await send_contact_request(
+                    bot_token=bot_token,
+                    chat_id=chat_id,
+                    body_text=reply["body_text"],
+                    button_text=reply["button_text"],
+                )
             else:
-                await send_text_message(bot_token=bot_token, chat_id=chat_id, body=reply)
+                await send_text_message(
+                    bot_token=bot_token,
+                    chat_id=chat_id,
+                    body=reply,
+                    remove_keyboard=clear_contact_keyboard,
+                )
         except TelegramSendError:
             logger.exception("Failed to send Telegram reply to chat_id=%s", chat_id)
 
