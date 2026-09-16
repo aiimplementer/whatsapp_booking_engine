@@ -279,7 +279,16 @@ a.quiet { color: inherit; text-decoration: none; }
   font-weight: 600;
 }
 
-.app-main { padding: 1.25rem 0 1.75rem 1.25rem; }
+/* .app-main is a grid item (see .app-shell's grid-template-columns) with
+   no explicit min-width, so its default "automatic minimum size" is the
+   min-content size of everything inside it — including the slot picker's
+   day-tabs row, a nowrap flex list that can easily need 1000px+ once
+   there are 10+ day pills. That min-content width stretches the grid
+   TRACK itself, pushing .app-main (and the whole page) past the viewport
+   instead of letting .day-tabs scroll internally like it's supposed to —
+   same cut-off-content bug already fixed on .booking-main below; this is
+   the admin-dashboard equivalent of the same layout. */
+.app-main { padding: 1.25rem 0 1.75rem 1.25rem; min-width: 0; }
 
 .page-head {
   display: flex;
@@ -398,6 +407,7 @@ input[type="tel"],
 input[type="password"],
 input[type="date"],
 input[type="time"],
+input[type="number"],
 select,
 textarea {
   font-family: var(--font-body);
@@ -416,12 +426,37 @@ input[type="tel"]:focus,
 input[type="password"]:focus,
 input[type="date"]:focus,
 input[type="time"]:focus,
+input[type="number"]:focus,
 select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--blue);
   box-shadow: 0 0 0 3px rgba(26, 99, 214, 0.1);
 }
+
+/* Duration is auto-filled from the selected service (or the tenant
+   default) and isn't meant to be hand-edited — readonly here just blocks
+   typing, but number inputs still show spinner arrows and can be nudged
+   with the mouse wheel while focused, which looks editable even though it
+   isn't. Hide the spinners and drop the focus ring so it reads as a plain
+   display field instead of an input staff might try to click into. */
+input[type="number"][readonly] {
+  -moz-appearance: textfield;
+  background: var(--paper);
+  color: var(--ink-soft);
+  cursor: default;
+}
+input[type="number"][readonly]::-webkit-outer-spin-button,
+input[type="number"][readonly]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"][readonly]:focus {
+  outline: none;
+  border-color: var(--rule-strong);
+  box-shadow: none;
+}
+
 
 input[type="date"],
 input[type="time"] {

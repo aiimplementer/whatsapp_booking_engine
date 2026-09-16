@@ -1,0 +1,401 @@
+/**
+ * Slot Picker Component Styles
+ * 
+ * Responsive styling for the slot picker component used in:
+ * - Public booking page (customers)
+ * - Admin dashboard (staff)
+ * 
+ * Mobile-first approach: works seamlessly on phone, tablet, and desktop.
+ */
+
+/* ============================================================================
+   Slot Picker Container & Overall Layout
+   ============================================================================ */
+
+.slot-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ============================================================================
+   Day Tabs Section
+   ============================================================================ */
+
+.day-tabs-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  overflow: hidden;
+  /* Creates a new stacking context for the tabs to scroll smoothly */
+  position: relative;
+}
+
+.day-tabs {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch; /* smooth momentum scrolling on iOS */
+  flex: 1;
+  min-width: 0;
+  scroll-behavior: smooth;
+  
+  /* Hide scrollbar for cleaner look on desktop, but keep touch scrolling on mobile */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  
+  /* Padding for scrolling room */
+  padding-bottom: 0.25rem;
+}
+
+.day-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.day-tab {
+  flex: 0 0 auto;
+  padding: 0.65rem 0.95rem;
+  border: 1px solid #ddd;
+  border-radius: 0.375rem;
+  background: #f9f9f9;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  text-align: center;
+  
+  /* Prevent text selection on rapid taps */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.day-tab:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.day-tab.selected {
+  background: #007bff;
+  color: white;
+  border-color: #0056b3;
+  font-weight: 600;
+}
+
+/* Day tab internal layout */
+.day-tab .dow {
+  display: block;
+  font-size: 0.8rem;
+  opacity: 0.85;
+  margin-bottom: 0.15rem;
+  font-weight: 700;
+}
+
+/* Smaller font on very narrow screens */
+@media (max-width: 360px) {
+  .day-tab {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.8rem;
+  }
+  
+  .day-tab .dow {
+    font-size: 0.7rem;
+  }
+}
+
+/* ============================================================================
+   Day Tabs Navigation Buttons (Prev/Next)
+   ============================================================================ */
+
+.day-tabs-nav {
+  flex: 0 0 auto;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #333;
+  border-radius: 0.375rem;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Improve touch target on mobile */
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+}
+
+.day-tabs-nav:hover:not(:disabled) {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.day-tabs-nav:active:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.day-tabs-nav:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #999;
+}
+
+/* Hide nav buttons on screens where day tabs fit without scrolling */
+@media (max-width: 480px) {
+  /* On mobile, always show nav buttons since screen is narrow */
+  .day-tabs-nav {
+    width: 2.15rem;
+    height: 2.15rem;
+    font-size: 1rem;
+  }
+}
+
+/* ============================================================================
+   Slot Grid
+   ============================================================================ */
+
+.slot-grid {
+  display: grid;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+/* Mobile: 3 columns (phone width ~320-480px) */
+@media (max-width: 480px) {
+  .slot-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+}
+
+/* Tablet: 4 columns (tablet width ~480-768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .slot-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Desktop: 5-6 columns (desktop width >768px) */
+@media (min-width: 769px) {
+  .slot-grid {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+}
+
+/* ============================================================================
+   Slot Buttons
+   ============================================================================ */
+
+.slot-btn {
+  padding: 0.7rem 0.5rem;
+  border: 2px solid #ddd;
+  background: white;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #333;
+  transition: all 0.15s ease;
+  
+  /* Improve touch target on mobile */
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Prevent text selection on rapid taps */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.slot-btn:hover:not(:disabled) {
+  border-color: #007bff;
+  background: #f0f8ff;
+  transform: translateY(-1px);
+}
+
+.slot-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.slot-btn.selected {
+  background: #007bff;
+  color: white;
+  border-color: #0056b3;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.slot-btn.selected:hover {
+  background: #0056b3;
+  border-color: #003d82;
+}
+
+.slot-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f5f5;
+}
+
+/* Extra space on very small screens for fat-finger-friendly touch */
+@media (max-width: 360px) {
+  .slot-btn {
+    padding: 0.65rem 0.35rem;
+    min-height: 2.3rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* ============================================================================
+   Empty State & Loading Messages
+   ============================================================================ */
+
+#slot-picker-no-slots,
+#slot-picker-loading {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+  border-radius: 0.375rem;
+  background: #f9f9f9;
+  margin: 0.5rem 0;
+}
+
+#slot-picker-loading {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ============================================================================
+   Admin Dashboard Integration
+   ============================================================================ */
+
+#na-chosen-slot {
+  font-size: 0.9rem;
+  color: #28a745;
+  padding: 0.5rem 0;
+}
+
+#na-chosen-slot::before {
+  content: '✓ ';
+  font-weight: bold;
+}
+
+/* ============================================================================
+   Accessibility
+   ============================================================================ */
+
+.slot-btn:focus,
+.day-tab:focus,
+.day-tabs-nav:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+  .slot-btn,
+  .day-tab,
+  .day-tabs-nav {
+    border-width: 2px;
+  }
+  
+  .slot-btn.selected,
+  .day-tab.selected {
+    font-weight: 700;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .day-tabs {
+    scroll-behavior: auto;
+  }
+  
+  .slot-btn,
+  .day-tab,
+  .day-tabs-nav,
+  #slot-picker-loading {
+    transition: none;
+  }
+  
+  .slot-btn:hover:not(:disabled) {
+    transform: none;
+  }
+  
+  #slot-picker-loading {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
+/* ============================================================================
+   Dark Mode Support (optional, adjust colors to match your theme)
+   ============================================================================ */
+
+@media (prefers-color-scheme: dark) {
+  .day-tab {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+  
+  .day-tab:hover {
+    background: #3a3a3a;
+    border-color: #666;
+  }
+  
+  .slot-btn {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+  
+  .slot-btn:hover:not(:disabled) {
+    background: #1a3a4f;
+    border-color: #0088dd;
+  }
+  
+  .day-tabs-nav,
+  #slot-picker-no-slots,
+  #slot-picker-loading {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #a0a0a0;
+  }
+}
+
+/* ============================================================================
+   Landscape Mode on Mobile (optional enhancements)
+   ============================================================================ */
+
+@media (max-width: 768px) and (orientation: landscape) {
+  .slot-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.4rem;
+  }
+  
+  .slot-btn {
+    padding: 0.6rem 0.4rem;
+    min-height: 2.2rem;
+  }
+}

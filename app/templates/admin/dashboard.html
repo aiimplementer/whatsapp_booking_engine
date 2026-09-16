@@ -26,17 +26,24 @@
     <div class="field-row">
       <div class="field">
         <label for="na-service">Service (optional)</label>
-        <select id="na-service"><option value="">— none —</option></select>
+        <select id="na-service"><option value="">Not Applicable</option></select>
       </div>
       <div class="field">
         <label for="na-duration">Duration (minutes)</label>
-        <input type="number" id="na-duration" min="1" value="20" required />
+        <input type="number" id="na-duration" readonly tabindex="-1" />
       </div>
     </div>
+    
+    <!-- Slot picker component -->
     <div class="field">
-      <label for="na-when">Date &amp; time</label>
-      <input type="datetime-local" id="na-when" required />
+      <label>Date &amp; time</label>
+      <div id="na-slot-picker" style="margin-top: 0.5rem;"></div>
+      <p id="na-chosen-slot" class="muted hidden" style="margin-top: 0.5rem;"></p>
     </div>
+    <!-- Hidden input to hold the selected slot data for form submission -->
+    <input type="hidden" id="na-selected-slot-iso" />
+    <input type="hidden" id="na-selected-slot-duration" />
+    
     <div class="field">
       <label for="na-notes">Notes (optional)</label>
       <textarea id="na-notes" rows="2"></textarea>
@@ -90,5 +97,6 @@
 </div>
 {% endblock %}
 {% block admin_scripts %}
+<script src="/static/js/slot_picker.js"></script>
 <script src="/static/js/admin_dashboard.js"></script>
 {% endblock %}

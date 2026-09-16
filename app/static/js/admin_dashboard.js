@@ -10,7 +10,20 @@ const els = {
   newBanner: document.getElementById('new-appt-banner'),
   serviceSelect: document.getElementById('na-service'),
   durationInput: document.getElementById('na-duration'),
+  slotPickerContainer: document.getElementById('na-slot-picker'),
+  chosenSlotDisplay: document.getElementById('na-chosen-slot'),
+  selectedSlotIso: document.getElementById('na-selected-slot-iso'),
+  selectedSlotDuration: document.getElementById('na-selected-slot-duration'),
 };
+
+// Tenant-wide default appointment length (from the "no service selected"
+// scheduling config), used to prefill Duration when the Service dropdown
+// is left on "Not Applicable". Falls back to 30 if the config can't be loaded
+// so the field is never left blank/invalid.
+let tenantDefaultDuration = 30;
+
+// Slot picker instance (initialized after services are loaded)
+let slotPicker = null;
 
 // Kept so the click handler can look up an appointment's details (name,
 // time, phone, service) by id when building the confirmation message,
@@ -76,13 +89,78 @@ async function loadServiceOptions() {
       opt.dataset.duration = s.duration_minutes;
       els.serviceSelect.appendChild(opt);
     }
+    // Initialize slot picker after services are loaded
+    initializeSlotPicker();
   } catch (err) {
     // Non-fatal — manual appointments can still be created without a service.
   }
 }
+
+async function loadDefaultDuration() {
+  try {
+    const configs = await Api.get('/api/v1/scheduling/configs');
+    // The tenant-wide default is the one config row with no service_id
+    // pinned (service-specific configs override start/end times per
+    // service, not the fallback duration used when staff pick "Not Applicable").
+    const tenantConfig = configs.find((c) => !c.service_id);
+    if (tenantConfig) tenantDefaultDuration = tenantConfig.appointment_duration_minutes;
+  } catch (err) {
+    // Non-fatal — falls back to the hardcoded default above.
+  } finally {
+    // Only set the field if the staff member hasn't already picked a
+    // service (which would have set its own duration) or typed a value.
+    if (!els.serviceSelect.value && !els.durationInput.value) {
+      els.durationInput.value = tenantDefaultDuration;
+    }
+  }
+}
+
+// Duration is read-only (set from the selected service or the tenant
+// default — see the service "change" handler and loadDefaultDuration
+// above). The `readonly` attribute alone still lets some browsers change
+// a focused number input's value with the mouse wheel or the spinner
+// arrows, which would silently desync it from the service that's
+// actually selected — blur immediately so it never stays focused/editable.
+els.durationInput.addEventListener('focus', () => els.durationInput.blur());
+els.durationInput.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
+
+function initializeSlotPicker() {
+  const tz = Api.getTenantTimezone();
+  slotPicker = new SlotPicker({
+    container: els.slotPickerContainer,
+    apiEndpoint: '/api/v1/appointments/available-slots',
+    auth: true, // staff-only endpoint — requires the admin's bearer token
+    tenantTimezone: tz,
+    onSlotSelected: (slot) => {
+      els.selectedSlotIso.value = slot.iso;
+      els.selectedSlotDuration.value = slot.duration;
+      const { date, time } = fmtDateTime(slot.iso, tz);
+      els.chosenSlotDisplay.textContent = `✓ ${date} at ${time} (${slot.duration} min)`;
+      els.chosenSlotDisplay.classList.remove('hidden');
+    },
+    onError: (err) => {
+      showBanner(els.newBanner, `Could not load available slots: ${err.message}`);
+    }
+  });
+}
+
 els.serviceSelect.addEventListener('change', () => {
-  const opt = els.serviceSelect.selectedOptions[0];
-  if (opt && opt.dataset.duration) els.durationInput.value = opt.dataset.duration;
+  // When service changes, reload available slots for that service, and
+  // reset Duration to that service's own length (or the tenant default
+  // for "Not Applicable") — staff can still edit it by hand afterward for a
+  // one-off longer/shorter booking.
+  const selectedServiceId = els.serviceSelect.value || null;
+  const selectedOption = els.serviceSelect.selectedOptions[0];
+  els.durationInput.value = selectedOption && selectedOption.dataset.duration
+    ? selectedOption.dataset.duration
+    : tenantDefaultDuration;
+  if (slotPicker) {
+    slotPicker.clearSelection();
+    els.chosenSlotDisplay.classList.add('hidden');
+    els.selectedSlotIso.value = '';
+    els.selectedSlotDuration.value = '';
+    slotPicker.loadSlots(selectedServiceId);
+  }
 });
 
 function renderRow(a) {
@@ -224,31 +302,61 @@ els.filterForm.addEventListener('submit', (e) => {
 
 els.newBtn.addEventListener('click', () => {
   els.newPanel.hidden = !els.newPanel.hidden;
+  if (!els.newPanel.hidden && slotPicker) {
+    // When opening the form, load slots for the currently selected service
+    const selectedServiceId = els.serviceSelect.value || null;
+    slotPicker.loadSlots(selectedServiceId);
+    // form.reset() (Cancel/after save) clears Duration back to blank since
+    // it has no static HTML default — restore it here so the field never
+    // opens empty.
+    if (!els.durationInput.value) {
+      const selectedOption = els.serviceSelect.selectedOptions[0];
+      els.durationInput.value = selectedOption && selectedOption.dataset.duration
+        ? selectedOption.dataset.duration
+        : tenantDefaultDuration;
+    }
+  }
 });
 els.newCancel.addEventListener('click', () => {
   els.newPanel.hidden = true;
   els.newForm.reset();
+  els.durationInput.value = tenantDefaultDuration;
+  if (slotPicker) {
+    slotPicker.clearSelection();
+    els.chosenSlotDisplay.classList.add('hidden');
+    els.selectedSlotIso.value = '';
+    els.selectedSlotDuration.value = '';
+  }
 });
 
 els.newForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   showBanner(els.newBanner, null);
-  const whenLocal = document.getElementById('na-when').value;
-  if (!whenLocal) return;
+  
+  // The slot picker provides scheduled_at; duration_minutes comes from the
+  // (editable) Duration field, which defaults to the picked slot's own
+  // length but staff can override it for a one-off longer/shorter booking
+  // — the server re-validates the result against business hours and
+  // existing appointments regardless of what's sent here.
+  const scheduledAt = els.selectedSlotIso.value;
+  const durationMinutes = Number(els.durationInput.value);
+  
+  if (!scheduledAt) {
+    showBanner(els.newBanner, 'Please select a date and time from the available slots');
+    return;
+  }
+  if (!durationMinutes || durationMinutes <= 0) {
+    showBanner(els.newBanner, 'Please enter a valid duration');
+    return;
+  }
+  
   const body = {
     customer_name: document.getElementById('na-name').value.trim(),
     customer_phone: document.getElementById('na-phone').value.trim(),
     service_id: els.serviceSelect.value || null,
-    duration_minutes: Number(els.durationInput.value),
-    // The datetime-local input's value has no timezone info attached, so
-    // `new Date(whenLocal)` would parse it in the ADMIN'S OWN browser
-    // timezone rather than the business's — an admin entering "9:00 AM"
-    // for a tenant in a different timezone than their own would silently
-    // get a wrong appointment time (potentially outside working hours,
-    // since nothing downstream re-checks an already-computed timestamp).
-    // zonedTimeToUtcIso interprets the entered wall-clock time as being in
-    // the tenant's own timezone instead.
-    scheduled_at: zonedTimeToUtcIso(whenLocal, Api.getTenantTimezone()),
+    duration_minutes: durationMinutes,
+    // The slot picker already returns a UTC ISO string, so use it directly
+    scheduled_at: scheduledAt,
     notes: document.getElementById('na-notes').value.trim() || null,
     status: 'CONFIRMED',
   };
@@ -258,7 +366,14 @@ els.newForm.addEventListener('submit', async (e) => {
     await Api.post('/api/v1/appointments', body);
     toast('Appointment saved');
     els.newForm.reset();
+    els.durationInput.value = tenantDefaultDuration;
     els.newPanel.hidden = true;
+    if (slotPicker) {
+      slotPicker.clearSelection();
+      els.chosenSlotDisplay.classList.add('hidden');
+      els.selectedSlotIso.value = '';
+      els.selectedSlotDuration.value = '';
+    }
     loadAppointments();
   } catch (err) {
     showBanner(els.newBanner, err.detail || err.message);
@@ -289,4 +404,5 @@ if (presetPhone) {
 }
 
 loadServiceOptions();
+loadDefaultDuration();
 loadAppointments();
