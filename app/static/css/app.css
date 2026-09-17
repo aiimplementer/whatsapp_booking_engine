@@ -882,6 +882,13 @@ table.sheet tr:last-child td { border-bottom: none; }
     max-height: calc(100vh - 2.5rem);
     overflow-y: auto;
   }
+  /* The recap sidebar (.booking-side) only applies to the "New booking"
+     tab; setMode() hides it via .hidden for every other tab. But .hidden
+     is just display:none on the sidebar itself — the grid still reserves
+     its 260px column, leaving the visible panel narrower than the tab
+     strip above it. When JS marks the layout .no-sidebar, collapse that
+     column so the panel matches the full tab-strip width instead. */
+  .booking-layout.no-sidebar { grid-template-columns: 1fr; }
 }
 
 .booking-panel { padding: 1.1rem 1.25rem 1.25rem; }

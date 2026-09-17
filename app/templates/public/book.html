@@ -17,21 +17,19 @@
   <div id="booking-root" class="hidden">
     <div class="booking-header">
       <h1 class="biz-name" id="biz-name">{{ business_label }}</h1>
-      <p class="muted" id="biz-sub">Welcome to ScheduleMate to manage appointments!</p>
+      <p class="muted" id="biz-sub">Welcome! Manage your appointments or explore our services below.</p>
     </div>
-
-    <div id="business-info" class="business-info hidden"></div>
 
     <div class="mode-switch" role="tablist">
       <button type="button" class="mode-tab hidden" id="tab-about" role="tab" aria-selected="false">ℹ️ About</button>
-      <button type="button" class="mode-tab active" id="tab-new" role="tab" aria-selected="true">New booking</button>
-      <button type="button" class="mode-tab" id="tab-lookup" role="tab" aria-selected="false">View / Cancel booking</button>
+      <button type="button" class="mode-tab active" id="tab-new" role="tab" aria-selected="true">New Booking</button>
+      <button type="button" class="mode-tab" id="tab-lookup" role="tab" aria-selected="false">View / Cancel Booking</button>
       <button type="button" class="mode-tab hidden" id="tab-offers" role="tab" aria-selected="false">🎁 Offers</button>
       <button type="button" class="mode-tab hidden" id="tab-announcements" role="tab" aria-selected="false">📢 Announcements</button>
       <button type="button" class="mode-tab hidden" id="tab-hours" role="tab" aria-selected="false">🕐 Business Hours</button>
     </div>
 
-    <div class="booking-layout">
+    <div class="booking-layout" id="booking-layout">
       <div class="booking-main">
         <div id="booking-app">
           <div class="panel booking-panel">
@@ -58,7 +56,7 @@
               <form id="booking-form">
                 <!-- Full name - single column on all screen sizes -->
                 <div class="field">
-                  <label for="b-name">Full name</label>
+                  <label for="b-name">Name</label>
                   <input type="text" id="b-name" required maxlength="150" />
                 </div>
                 
@@ -91,12 +89,13 @@
             <div class="ref" id="conf-ref"></div>
             <p id="conf-when"></p>
             <p id="conf-details" class="muted"></p>
-            <p class="muted">Keep your reference and phone number — you'll need both to look up or cancel this booking.</p>
+            <p class="muted">Please keep your booking reference and phone number. You'll need both to view or cancel this booking.</p>
           </div>
         </div>
 
         <div id="lookup-view" class="hidden">
           <div class="panel lookup-panel">
+            <div id="business-info" class="business-info hidden"></div>
             <form id="lookup-form">
               <div class="field">
                 <label for="l-ref">Booking reference</label>

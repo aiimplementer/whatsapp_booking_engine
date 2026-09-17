@@ -38,6 +38,7 @@ const pbEls = {
   announcementsContent: document.getElementById('announcements-content'),
   hoursContent: document.getElementById('hours-content'),
   bookingSide: document.getElementById('booking-side'),
+  bookingLayout: document.getElementById('booking-layout'),
   sideService: document.getElementById('side-service'),
   sideTime: document.getElementById('side-time'),
   sideHint: document.getElementById('side-hint'),
@@ -70,7 +71,14 @@ function setMode(mode) {
   // The recap sidebar only means anything for the booking flow — hide it
   // for every other tab so those views aren't left with a stale or
   // pointless "Not selected yet" card beside them.
-  pbEls.bookingSide.classList.toggle('hidden', mode !== 'new');
+  const showSidebar = mode === 'new';
+  pbEls.bookingSide.classList.toggle('hidden', !showSidebar);
+  // Hiding the sidebar above only sets display:none on it — the desktop
+  // grid still reserves its 260px column unless we also collapse that,
+  // which would leave the visible panel narrower than the tab strip
+  // above it. .no-sidebar (see CSS) drops the layout to a single full-
+  // width column to match.
+  pbEls.bookingLayout.classList.toggle('no-sidebar', !showSidebar);
 }
 pbEls.tabAbout.addEventListener('click', () => setMode('about'));
 pbEls.tabNew.addEventListener('click', () => setMode('new'));
@@ -310,11 +318,12 @@ pbEls.lookupForm.addEventListener('submit', async (e) => {
 /* ---- Business info: Offers / Announcements / Hours tabs + Policy toggle - */
 // Offers, Announcements, and Business Hours are the 3rd/4th/5th tabs next
 // to "New booking" / "Look up / cancel" (see PB_TABS above). Cancellation
-// Policy stays in the small collapsed toggle beneath the business name —
-// it's read far less often than the other three, so it doesn't need a full
-// tab of its own. Each piece — the three tabs and the toggle — is shown
-// only if the tenant has actually set that content; a tenant with nothing
-// filled in sees exactly the two original tabs, unchanged.
+// Policy lives as a small collapsed toggle inside the "View / Cancel
+// booking" tab itself — it's most relevant right when someone is looking
+// up a booking to cancel it, not on every tab. Each piece — the three tabs
+// and the toggle — is shown only if the tenant has actually set that
+// content; a tenant with nothing filled in sees exactly the two original
+// tabs, unchanged.
 function renderWorkingHoursTable(days) {
   const rows = days
     .map((d) => {
