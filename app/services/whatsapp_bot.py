@@ -772,8 +772,17 @@ async def _handle_await_contact(
         # see routers/telegram.py). Per requirement: never save or confirm
         # the appointment without it, and stay on this step so a retry with
         # the button still works.
+        #
+        # Share Contact is a native mobile-app feature — Telegram Web/Desktop
+        # have a long history of that button rendering but doing nothing
+        # when tapped there, so a Telegram Web customer would otherwise be
+        # stuck here with no way forward. Point them at the mobile app
+        # instead of leaving them guessing.
         return [
-            "This appointment can't be confirmed without your contact number.",
+            "This appointment can't be confirmed without your contact number.\n\n"
+            "If tapping *Share Contact* isn't doing anything, that button only "
+            "works in the Telegram mobile app — please open this chat on your "
+            "phone to finish sharing your number and complete the booking.",
             _render_contact_request(),
         ]
 
