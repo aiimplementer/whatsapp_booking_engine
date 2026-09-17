@@ -200,10 +200,10 @@ a.quiet { color: inherit; text-decoration: none; }
   .masthead .booking-nav { gap: 0.6rem; }
   .masthead .booking-nav .help-link { font-size: 0.8rem; }
   .masthead .booking-nav .site-powered-by {
-    padding-left: 0.5rem;
-    font-size: 0.65rem;
+    padding-left: 0.4rem;
+    font-size: 0.58rem;
   }
-  .masthead .booking-nav .site-powered-by img { height: 10px; }
+  .masthead .booking-nav .site-powered-by img { height: 8px; }
 }
 
 /* ---- admin top nav (SaaS-style: user/role/logout live in the header) --- */
@@ -1394,6 +1394,8 @@ table.sheet tr:last-child td { border-bottom: none; }
   .app-sidebar { border-right: none; border-bottom: 1px solid var(--rule); padding: 1rem 0; }
   .side-nav { display: flex; flex-wrap: wrap; gap: 0.25rem; }
   .sidebar-footer { margin-top: 0.5rem; padding-top: 0.5rem; }
+  .sidebar-footer .powered-by { font-size: 0.6rem; }
+  .sidebar-footer .powered-by img { height: 8px; }
   .app-main { padding: 1rem; }
   .feature-grid { grid-template-columns: 1fr; }
   .month-day { min-height: 52px; padding: 0.3rem; }
@@ -1471,9 +1473,9 @@ table.sheet tr:last-child td { border-bottom: none; }
   .site-powered-by {
     margin-left: 0; /* no room to float it right on a narrow row */
     flex-basis: 100%;
-    font-size: 0.65rem;
+    font-size: 0.58rem;
   }
-  .site-powered-by img { height: 10px; }
+  .site-powered-by img { height: 8px; }
 }
 
 :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
