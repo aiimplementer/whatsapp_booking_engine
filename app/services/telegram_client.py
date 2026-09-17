@@ -146,14 +146,10 @@ async def send_inline_keyboard(
             lines.append(f"\n*{title}*")
         for row in section.get("rows", []):
             label = row["title"]
-            # Service rows' "description" is just the duration (e.g. "45
-            # min") — on WhatsApp that's a second list-row line, but on
-            # Telegram's single-line inline buttons it reads as clutter, so
-            # skip it there. Other rows (main menu, etc.) keep their
-            # description since it's the only explanation those get.
-            is_service_row = row["id"].startswith("svc_")
-            if row.get("description") and not is_service_row:
-                label = f"{label} — {row['description']}"
+            # Telegram's inline buttons are single-line, so keep them to
+            # just the title (e.g. "Offers", "Announcements") — unlike
+            # WhatsApp's list rows, appending row["description"] here made
+            # every button an overlong "Title — description" line.
             keyboard.append([{"text": label[:ROW_TITLE_MAX], "callback_data": row["id"]}])
 
     url = f"{API_BASE}/bot{bot_token}/sendMessage"
