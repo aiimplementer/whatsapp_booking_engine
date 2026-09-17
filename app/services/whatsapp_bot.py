@@ -91,7 +91,10 @@ def _render_contact_request() -> dict:
         "type": "request_contact",
         "body_text": (
             "One last thing \u2014 please share your contact number so we can "
-            "confirm your appointment. Tap the button below."
+            "confirm your appointment. Tap the button below.\n\n"
+            "(On Telegram Desktop/Web that button doesn't always respond \u2014 "
+            "if nothing happens when you tap it, please open this chat in the "
+            "Telegram mobile app to finish sharing your number.)"
         ),
         "button_text": "\U0001f4de Share Contact",
     }
