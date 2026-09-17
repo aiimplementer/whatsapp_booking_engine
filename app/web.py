@@ -103,6 +103,15 @@ async def public_booking(request: Request, tenant_slug: str):
     )
 
 
+@router.get("/book/{tenant_slug}/help")
+async def public_booking_help(request: Request, tenant_slug: str):
+    return templates.TemplateResponse(
+        request,
+        "public/help.html",
+        {"tenant_slug": tenant_slug, "business_label": _humanize_slug(tenant_slug)},
+    )
+
+
 @router.get("/robots.txt")
 async def robots_txt():
     lines = [

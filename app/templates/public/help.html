@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Help — booking with {{ business_label }} — ScheduleMate{% endblock %}
+{% block meta_description %}How to book, look up, or cancel an appointment with {{ business_label }} on their ScheduleMate booking page.{% endblock %}
+{% block robots %}noindex, follow{% endblock %}
+{% block nav %}
+<nav>
+  <a class="nav-secondary" href="/book/{{ tenant_slug }}">&larr; Back to booking</a>
+</nav>
+{% endblock %}
+{% block content %}
+<div class="container narrow">
+  <div class="page-head">
+    <div>
+      <h1>Help with booking</h1>
+      <p class="lede">How to book, find, or cancel an appointment with {{ business_label }}.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>On this page</h3>
+    <div class="row" style="display:flex; flex-wrap: wrap; gap: 0.5rem 1.25rem;">
+      <a href="#help-book">Making a booking</a>
+      <a href="#help-lookup">Find or cancel a booking</a>
+      <a href="#help-tabs">About, Offers, Announcements &amp; Hours</a>
+      <a href="#help-whatsapp">Booking over WhatsApp</a>
+      <a href="#help-faq">Common questions</a>
+    </div>
+  </div>
+
+  <div class="panel" id="help-book">
+    <h2>Making a booking</h2>
+    <p>Booking with {{ business_label }} takes three quick steps on the <strong>New booking</strong> tab:</p>
+    <ul>
+      <li><strong>1. Service:</strong> pick what you'd like from the list. Each option shows its duration.</li>
+      <li><strong>2. Time:</strong> choose a day from the strip at the top, then a time from the slots shown for that day. Only times that are actually free appear — if a day has none, try another using the <em>&lsaquo;</em> / <em>&rsaquo;</em> arrows or by scrolling the day strip.</li>
+      <li><strong>3. Your details:</strong> enter your name and phone number (email and notes are optional), then confirm.</li>
+    </ul>
+    <p>Once confirmed, you'll see a booking reference like <code>APT-XXXXXXXX</code> along with the date and time. <strong>Save this reference and keep the phone number you booked with</strong> — you'll need both together to look up or cancel the appointment later.</p>
+  </div>
+
+  <div class="panel" id="help-lookup">
+    <h2>Find or cancel a booking</h2>
+    <p>Open the <strong>View / Cancel booking</strong> tab and enter the two things from your confirmation:</p>
+    <ul>
+      <li>Your <strong>booking reference</strong> (looks like <code>APT-XXXXXXXX</code>)</li>
+      <li>The <strong>phone number</strong> you used when you booked</li>
+    </ul>
+    <p>Both must match exactly what's on the booking, so double-check for typos if a lookup doesn't find anything. Once it's found, you can review the details or cancel it from there.</p>
+    <p class="field-hint">Lost your reference and can't find the confirmation? Contact {{ business_label }} directly — they can look the booking up on their end.</p>
+  </div>
+
+  <div class="panel" id="help-tabs">
+    <h2>About, Offers, Announcements &amp; Hours</h2>
+    <p>Depending on what {{ business_label }} has set up, you may also see extra tabs alongside booking:</p>
+    <ul>
+      <li><strong>ℹ️ About:</strong> background on the business — what they do, where they are, how to reach them.</li>
+      <li><strong>🎁 Offers:</strong> any current promotions or discounts.</li>
+      <li><strong>📢 Announcements:</strong> news or updates, like temporary closures or new services.</li>
+      <li><strong>🕐 Business Hours:</strong> the days and times the business is generally open (this is separate from live appointment availability, which is shown in the booking steps).</li>
+    </ul>
+    <p class="field-hint">Not every business fills in all of these, so you may only see a subset of these tabs — that's expected.</p>
+  </div>
+
+  <div class="panel" id="help-whatsapp">
+    <h2>Booking over WhatsApp</h2>
+    <p>Some businesses also take bookings over WhatsApp instead of, or alongside, this page. If {{ business_label }} has shared a WhatsApp number with you, you can message it directly to ask about availability and book the same way — it uses the same calendar as this page, so there's no risk of a double-booking either way.</p>
+  </div>
+
+  <div class="panel" id="help-faq">
+    <h2>Common questions</h2>
+    <details>
+      <summary>I didn't get a confirmation message — is my booking still made?</summary>
+      <p>If you reached the "You're booked" screen with a reference number, your booking was created. This page doesn't send SMS/email confirmations itself — save the reference shown on screen, or use <strong>View / Cancel booking</strong> any time to confirm it's still there.</p>
+    </details>
+    <details>
+      <summary>Can I change the time of an existing booking?</summary>
+      <p>This page supports cancelling a booking, but not editing its time directly. To change a time, cancel the existing booking under <strong>View / Cancel booking</strong> and make a new one for the time you want, or contact {{ business_label }} directly.</p>
+    </details>
+    <details>
+      <summary>Why can't I find any times for a day I want?</summary>
+      <p>A day with no slots showing is fully booked, outside the business's working hours, or blocked off (holiday or a one-off closure). Try another day, or check the <strong>Business Hours</strong> tab if it's available.</p>
+    </details>
+    <details>
+      <summary>My lookup says the reference or phone doesn't match — what now?</summary>
+      <p>Check both fields carefully — the reference is case-sensitive and the phone number must be entered the same way it was given at booking (including the country code, e.g. <code>+91...</code>). If it still doesn't match, contact {{ business_label }} directly with your name and approximate booking time.</p>
+    </details>
+    <details>
+      <summary>Is my information shared anywhere else?</summary>
+      <p>Your name, phone, and any notes are shared only with {{ business_label }} so they can manage the appointment.</p>
+    </details>
+  </div>
+
+  <p class="muted" style="text-align:center; margin-top: 0.5rem;">
+    <a href="/book/{{ tenant_slug }}">&larr; Back to the booking page</a>
+  </p>
+</div>
+{% endblock %}

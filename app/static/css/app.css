@@ -674,10 +674,20 @@ table.sheet tr:last-child td { border-bottom: none; }
 .booking-header { margin-bottom: 1rem; }
 .booking-header .biz-name { font-size: 1.5rem; margin-bottom: 0.15rem; }
 .booking-header .muted { font-size: 0.9rem; }
+.booking-header .help-link {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.booking-header .help-link:hover { color: var(--blue); }
 
 @media (max-width: 480px) {
   .booking-header .biz-name { font-size: 1.25rem; }
   .booking-header .muted { font-size: 0.85rem; }
+  .booking-header .help-link { font-size: 0.8rem; }
 }
 
 .mode-switch {
