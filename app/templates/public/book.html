@@ -17,6 +17,7 @@
     <div id="business-info" class="business-info hidden"></div>
 
     <div class="mode-switch" role="tablist">
+      <button type="button" class="mode-tab hidden" id="tab-about" role="tab" aria-selected="false">ℹ️ About</button>
       <button type="button" class="mode-tab active" id="tab-new" role="tab" aria-selected="true">New booking</button>
       <button type="button" class="mode-tab" id="tab-lookup" role="tab" aria-selected="false">Look up / cancel</button>
       <button type="button" class="mode-tab hidden" id="tab-offers" role="tab" aria-selected="false">🎁 Offers</button>
@@ -102,6 +103,12 @@
               <button class="btn btn-block" type="submit" style="margin-top: 0.5rem;">Look up</button>
             </form>
             <div id="lookup-result" style="margin-top: 0.85rem;"></div>
+          </div>
+        </div>
+
+        <div id="about-view" class="hidden">
+          <div class="panel">
+            <div class="info-section-body" id="about-content"></div>
           </div>
         </div>
 

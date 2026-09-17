@@ -21,16 +21,19 @@ const pbEls = {
   confDetails: document.getElementById('conf-details'),
   lookupForm: document.getElementById('lookup-form'),
   lookupResult: document.getElementById('lookup-result'),
+  tabAbout: document.getElementById('tab-about'),
   tabNew: document.getElementById('tab-new'),
   tabLookup: document.getElementById('tab-lookup'),
   tabOffers: document.getElementById('tab-offers'),
   tabAnnouncements: document.getElementById('tab-announcements'),
   tabHours: document.getElementById('tab-hours'),
   bookingAppView: document.getElementById('booking-app'),
+  aboutView: document.getElementById('about-view'),
   lookupView: document.getElementById('lookup-view'),
   offersView: document.getElementById('offers-view'),
   announcementsView: document.getElementById('announcements-view'),
   hoursView: document.getElementById('hours-view'),
+  aboutContent: document.getElementById('about-content'),
   offersContent: document.getElementById('offers-content'),
   announcementsContent: document.getElementById('announcements-content'),
   hoursContent: document.getElementById('hours-content'),
@@ -49,6 +52,7 @@ const pbEls = {
 // that content, so a tenant with nothing to show there looks exactly like
 // the page did before this change.
 const PB_TABS = {
+  about: { tab: 'tabAbout', view: 'aboutView' },
   new: { tab: 'tabNew', view: 'bookingAppView' },
   lookup: { tab: 'tabLookup', view: 'lookupView' },
   offers: { tab: 'tabOffers', view: 'offersView' },
@@ -68,6 +72,7 @@ function setMode(mode) {
   // pointless "Not selected yet" card beside them.
   pbEls.bookingSide.classList.toggle('hidden', mode !== 'new');
 }
+pbEls.tabAbout.addEventListener('click', () => setMode('about'));
 pbEls.tabNew.addEventListener('click', () => setMode('new'));
 pbEls.tabLookup.addEventListener('click', () => setMode('lookup'));
 pbEls.tabOffers.addEventListener('click', () => setMode('offers'));
@@ -329,6 +334,10 @@ function renderTextContent(text) {
 }
 
 function renderInfoTabs(info) {
+  if (info.about) {
+    pbEls.aboutContent.innerHTML = renderTextContent(info.about);
+    pbEls.tabAbout.classList.remove('hidden');
+  }
   if (info.offers) {
     pbEls.offersContent.innerHTML = renderTextContent(info.offers);
     pbEls.tabOffers.classList.remove('hidden');
@@ -368,6 +377,11 @@ async function init() {
     pbEls.bizName.textContent = info.name;
     renderInfoTabs(info);
     renderCancellationPolicyToggle(info);
+    // Open on About when the tenant has written one, so a first-time
+    // visitor gets context before being asked to pick a service. With no
+    // About set this resolves to 'new', which is exactly the state the
+    // markup already ships in — so those tenants see no change at all.
+    setMode(info.about ? 'about' : 'new');
     services = info.services || [];
     if (services.length > 0) {
       renderServices();

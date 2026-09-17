@@ -21,6 +21,7 @@ class PublicTenantOut(BaseModel):
     cancellation_policy: str | None
     offers: str | None
     announcements: str | None
+    about: str | None
     working_hours: list[WorkingHoursDayOut]
 
 

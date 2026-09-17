@@ -56,6 +56,13 @@ class Tenant(UUIDPKMixin, TimestampMixin, Base):
     # pattern as cancellation_policy/offers: optional, plain text, empty =
     # nothing to show.
     announcements: Mapped[str | None] = mapped_column(Text)
+    # Free-text "about the business" blurb — who they are, what they do,
+    # where to find them. Same pattern as cancellation_policy/offers/
+    # announcements: optional, plain text, empty = nothing to show. Unlike
+    # those three this one is primarily a public-booking-page concern: when
+    # set, it becomes the page's opening tab so a first-time visitor gets
+    # context before being asked to pick a service.
+    about: Mapped[str | None] = mapped_column(Text)
     branding: Mapped[dict] = mapped_column(JSONB, default=dict)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 

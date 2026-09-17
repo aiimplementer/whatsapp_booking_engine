@@ -68,6 +68,7 @@ async def get_business_info(
         cancellation_policy=tenant.cancellation_policy,
         offers=tenant.offers,
         announcements=tenant.announcements,
+        about=tenant.about,
         working_hours=working_hours_by_day(config) if config else [],
     )
 

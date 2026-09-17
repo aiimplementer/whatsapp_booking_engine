@@ -19,6 +19,7 @@ class TenantOut(BaseModel):
     cancellation_policy: str | None
     offers: str | None
     announcements: str | None
+    about: str | None
     branding: dict
     created_at: datetime
 
@@ -42,6 +43,7 @@ class TenantUpdate(BaseModel):
     cancellation_policy: str | None = Field(default=None, max_length=4000)
     offers: str | None = Field(default=None, max_length=4000)
     announcements: str | None = Field(default=None, max_length=4000)
+    about: str | None = Field(default=None, max_length=4000)
     branding: dict | None = None
 
     @field_validator("timezone")
