@@ -186,27 +186,24 @@ a.quiet { color: inherit; text-decoration: none; }
      the footer's wider flex row; here it's the last item in a short nav,
      so that would just blow a gap open before it instead — cancel it. */
   margin-left: 0;
-  gap: 0.4rem;
-  padding-left: 1rem;
+  gap: 0.3rem;
+  padding-left: 0.75rem;
   border-left: 1px solid var(--rule-strong);
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   white-space: nowrap;
 }
 .masthead .booking-nav .site-powered-by img {
-  /* Slightly taller than the 18px footer version — this wordmark's own
-     decorative flourish reads as noise below ~20px, so give it a bit more
-     room to stay legible next to the header text. */
-  height: 21px;
+  height: 12px;
 }
 
 @media (max-width: 480px) {
   .masthead .booking-nav { gap: 0.6rem; }
   .masthead .booking-nav .help-link { font-size: 0.8rem; }
   .masthead .booking-nav .site-powered-by {
-    padding-left: 0.6rem;
-    font-size: 0.8rem;
+    padding-left: 0.5rem;
+    font-size: 0.65rem;
   }
-  .masthead .booking-nav .site-powered-by img { height: 18px; }
+  .masthead .booking-nav .site-powered-by img { height: 10px; }
 }
 
 /* ---- admin top nav (SaaS-style: user/role/logout live in the header) --- */
@@ -292,14 +289,19 @@ a.quiet { color: inherit; text-decoration: none; }
   border-top: 1px solid var(--rule);
 }
 .sidebar-footer .powered-by {
-  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+  font-size: 0.65rem;
+  white-space: nowrap;
 }
-/* Height tuned for the cropped ai-implementer-logo-compact.png, which has
-   a much wider aspect ratio (~11:1) than the original full banner image
-   (~4:1) since the transparent padding around the wordmark was trimmed.
-   Using the old 20px here would render it nearly as wide as the sidebar
-   itself. */
-.sidebar-footer .powered-by img { height: 16px; width: auto; }
+/* Source file (ai-implementer-logo-compact.png) is 650x57, an ~11.4:1
+   wordmark — even a small height still yields a wide image, so the height
+   has to be pushed well down (not just trimmed a little) to actually keep
+   the whole "Powered by [logo]" row on one line inside the narrow sidebar
+   column. 10px height -> ~114px wide. */
+.sidebar-footer .powered-by img { height: 10px; width: auto; }
 
 .app-sidebar .tenant-name {
   font-family: var(--font-display);
@@ -1440,9 +1442,12 @@ table.sheet tr:last-child td { border-bottom: none; }
 .site-powered-by {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
   color: inherit;
   text-decoration: none;
+  font-size: 0.7rem;
+  white-space: nowrap;
   margin-left: auto; /* pins it to the right on wide screens */
 }
 .site-powered-by:hover { color: var(--ink); }
@@ -1452,7 +1457,7 @@ table.sheet tr:last-child td { border-bottom: none; }
    logo's aspect ratio, on both mobile and desktop. flex-shrink:0 stops
    the flex layout from ever compressing it non-uniformly. */
 .site-powered-by img {
-  height: 18px;
+  height: 11px;
   width: auto;
   display: block;
   flex-shrink: 0;
@@ -1466,8 +1471,9 @@ table.sheet tr:last-child td { border-bottom: none; }
   .site-powered-by {
     margin-left: 0; /* no room to float it right on a narrow row */
     flex-basis: 100%;
+    font-size: 0.65rem;
   }
-  .site-powered-by img { height: 16px; }
+  .site-powered-by img { height: 10px; }
 }
 
 :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
