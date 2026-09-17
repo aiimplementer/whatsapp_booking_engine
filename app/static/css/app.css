@@ -25,8 +25,11 @@
   --amber-soft: #f1e0c2;
   --coral: #b0473b;
   --coral-soft: #f3ddd8;
+  --coral-strong: #8a2f24; /* darker red used for success/error text+icons so the
+                              result reads clearly on both light and small screens */
   --sage: #4f7a5c;
   --sage-soft: #dfe9dc;
+  --sage-strong: #2f5c3d;
   --slate: #5b6b78;
   --slate-soft: #dee5e9;
 
@@ -558,20 +561,53 @@ input[type="radio"] {
 }
 
 .toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
   padding: 0.75rem 1rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--rule-strong);
+  border-left-width: 4px;
   background: var(--paper-raised);
   color: var(--ink);
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
   box-shadow: var(--shadow-card);
   pointer-events: auto;
   animation: toast-in 180ms ease-out;
+  word-break: break-word;
 }
 
-.toast-ok { background: var(--sage-soft); border-color: var(--sage); }
-.toast-error { background: var(--coral-soft); border-color: var(--coral); }
+/* Result feedback is colored (not just tinted) so success/error read at a
+   glance and don't rely on background tint alone — helps on low-contrast
+   mobile screens and for colorblind users, paired with the icon below. */
+.toast-ok {
+  background: var(--sage-soft);
+  border-color: var(--sage);
+  border-left-color: var(--sage);
+  color: var(--sage-strong);
+}
+.toast-error {
+  background: var(--coral-soft);
+  border-color: var(--coral);
+  border-left-color: var(--coral);
+  color: var(--coral-strong);
+}
+.toast-ok::before,
+.toast-error::before {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--paper-raised);
+  margin-top: 0.05rem;
+}
+.toast-ok::before { content: "\2713"; background: var(--sage-strong); }
+.toast-error::before { content: "\2715"; background: var(--coral-strong); }
 
 @keyframes toast-in {
   from { opacity: 0; transform: translateY(8px); }
@@ -590,24 +626,35 @@ input[type="radio"] {
 /* ---- banners --------------------------------------------------------------- */
 
 .banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
   padding: 0.95rem 1rem;
   border-radius: var(--radius-md);
   font-size: 0.9rem;
+  font-weight: 600;
   line-height: 1.4;
   margin-bottom: 1rem;
   border: 1px solid var(--rule);
+  border-left-width: 4px;
+  word-break: break-word;
 }
 
+/* Success/error use a strong (darker, more saturated) shade for text and
+   icon rather than the standard --coral/--sage accent, so the result reads
+   as unambiguously green or red rather than a muted tint. */
 .banner-error {
   background: var(--coral-soft);
   border-color: var(--coral);
-  color: var(--coral);
+  border-left-color: var(--coral);
+  color: var(--coral-strong);
 }
 
 .banner-success {
   background: var(--sage-soft);
   border-color: var(--sage);
-  color: var(--sage);
+  border-left-color: var(--sage);
+  color: var(--sage-strong);
 }
 
 .banner-info {
@@ -616,7 +663,45 @@ input[type="radio"] {
   color: var(--slate);
 }
 
-.banner.hidden { display: none; }
+.banner-error::before,
+.banner-success::before {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--paper-raised);
+  margin-top: 0.05rem;
+}
+.banner-error::before { content: "\2715"; background: var(--coral-strong); }
+.banner-success::before { content: "\2713"; background: var(--sage-strong); }
+
+/* Explicit: setting display:flex above on .banner would otherwise beat the
+   browser's built-in `[hidden] { display: none }` rule (same specificity,
+   author origin wins), so a banner toggled via the `hidden` attribute or
+   `.hidden = true` in JS would stay visible as an empty flex box instead of
+   disappearing. Both the HTML `hidden` attribute and the `.hidden` class
+   are used across pages, so both are covered here. */
+.banner.hidden,
+.banner[hidden] { display: none; }
+
+@media (max-width: 480px) {
+  .banner {
+    padding: 0.8rem 0.85rem;
+    font-size: 0.85rem;
+  }
+  .banner-error::before,
+  .banner-success::before,
+  .toast-ok::before,
+  .toast-error::before {
+    width: 1.1rem;
+    height: 1.1rem;
+    font-size: 0.65rem;
+  }
+}
 
 /* ---- panels ---------------------------------------------------------------- */
 
