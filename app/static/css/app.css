@@ -153,6 +153,59 @@ a.quiet { color: inherit; text-decoration: none; }
 }
 .masthead nav a.nav-secondary:hover { color: var(--blue); }
 
+/* ---- booking page masthead: help link + powered-by, right side --------- */
+/* The public booking page (book.html) overrides the shared {% block nav %}
+   with its own nav so the "Need help booking?" link and the "Powered by"
+   logo sit in the header's empty right-hand space, instead of the plain
+   empty <nav></nav> other pages leave there.
+   Every selector here is prefixed with ".masthead" (not just ".booking-nav")
+   on purpose: ".masthead nav" and ".masthead nav a:not(.btn)" above are
+   more specific than a single ".booking-nav ..." class selector would be,
+   so without the extra ".masthead" they'd silently win — in particular
+   ".masthead nav" sets align-items:baseline, which is what was dragging
+   the logo down off-center in the first place. */
+.masthead .booking-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  line-height: 1;
+}
+.masthead .booking-nav .help-link {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+.masthead .booking-nav .help-link:hover { color: var(--blue); }
+.masthead .booking-nav .site-powered-by {
+  /* .site-powered-by normally has margin-left:auto to pin it right inside
+     the footer's wider flex row; here it's the last item in a short nav,
+     so that would just blow a gap open before it instead — cancel it. */
+  margin-left: 0;
+  gap: 0.4rem;
+  padding-left: 1rem;
+  border-left: 1px solid var(--rule-strong);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.masthead .booking-nav .site-powered-by img {
+  /* Slightly taller than the 18px footer version — this wordmark's own
+     decorative flourish reads as noise below ~20px, so give it a bit more
+     room to stay legible next to the header text. */
+  height: 21px;
+}
+
+@media (max-width: 480px) {
+  .masthead .booking-nav { gap: 0.6rem; }
+  .masthead .booking-nav .help-link { font-size: 0.8rem; }
+  .masthead .booking-nav .site-powered-by {
+    padding-left: 0.6rem;
+    font-size: 0.8rem;
+  }
+  .masthead .booking-nav .site-powered-by img { height: 18px; }
+}
+
 /* ---- admin top nav (SaaS-style: user/role/logout live in the header) --- */
 
 .admin-topnav { align-items: center; gap: 1rem; }

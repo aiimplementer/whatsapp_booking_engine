@@ -2,7 +2,13 @@
 {% block title %}Book with {{ business_label }} — ScheduleMate{% endblock %}
 {% block meta_description %}Book an appointment with {{ business_label }} online — pick a service and a time, no phone call or WhatsApp needed.{% endblock %}
 {% block nav %}
-<nav></nav>
+<nav class="booking-nav">
+  <a class="help-link" href="/book/{{ tenant_slug }}/help">Need help booking?</a>
+  <a class="site-powered-by" href="https://ai-implementer.netlify.app/" target="_blank" rel="noopener">
+    <span>Powered by</span>
+    <img src="/static/img/ai-implementer-logo-compact.png" alt="AI Implementer" />
+  </a>
+</nav>
 {% endblock %}
 {% block content %}
 <div class="booking-wrap" data-slug="{{ tenant_slug }}">
@@ -12,7 +18,6 @@
     <div class="booking-header">
       <h1 class="biz-name" id="biz-name">{{ business_label }}</h1>
       <p class="muted" id="biz-sub">Welcome to ScheduleMate to manage appointments!</p>
-      <a class="help-link" href="/book/{{ tenant_slug }}/help">Need help booking?</a>
     </div>
 
     <div id="business-info" class="business-info hidden"></div>
@@ -151,6 +156,12 @@
     </div>
   </div>
 </div>
+{% endblock %}
+{% block footer %}
+<footer class="site-footer">
+  <span class="footer-note">&copy; 2026 ScheduleMate</span>
+  <a class="footer-note footer-link" href="/platform-admin/login">Platform admin</a>
+</footer>
 {% endblock %}
 {% block scripts %}
 <script src="/static/js/public_book.js"></script>
