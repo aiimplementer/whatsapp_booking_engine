@@ -198,6 +198,7 @@ def _render_email(
     )
     return f"""\
 <div style="font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #1a1a1a;">
+  {_brand_header_html()}
   <h2 style="margin-bottom: 4px;">{heading}</h2>
   <p style="color: #444;">{intro}</p>
   <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
@@ -206,6 +207,37 @@ def _render_email(
   <p style="color: #888; font-size: 12px;">This is an automated notification from your ScheduleMate admin dashboard — please don't reply to this email.</p>
 </div>
 """
+
+
+def _brand_header_html() -> str:
+    """Mirrors the public booking page's masthead (app/templates/base.html /
+    app.css .brand / .brand-word): the schedulemate-icon.png mark next to a
+    two-tone "ScheduleMate" wordmark (navy "Schedule" + green "Mate"),
+    same hex values as --brand-navy / --brand-green in app.css.
+
+    The icon image only renders when settings.public_base_url is set —
+    email clients need a real public HTTPS URL, they can't load
+    /static/img/... relative to nothing. The colored wordmark text always
+    renders regardless (no image dependency, so it survives images-off
+    email clients and a missing PUBLIC_BASE_URL alike), so the header is
+    never just a blank gap when the icon can't be resolved.
+    """
+    logo_img = ""
+    if settings.public_base_url:
+        logo_url = f"{settings.public_base_url.rstrip('/')}/static/img/schedulemate-icon.png"
+        logo_img = (
+            f'<img src="{logo_url}" alt="" width="28" height="28" '
+            f'style="vertical-align: middle; margin-right: 8px; border: 0; '
+            f'display: inline-block;" />'
+        )
+    return f"""\
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+  <tr>
+    <td style="padding-bottom: 14px; border-bottom: 2px solid #0d2e6d;">
+      {logo_img}<span style="font-family: Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; vertical-align: middle;"><span style="color: #0d2e6d;">Schedule</span><span style="color: #0f9d63;">Mate</span></span>
+    </td>
+  </tr>
+</table>"""
 
 
 class EmailSendError(Exception):
