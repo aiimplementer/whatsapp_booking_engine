@@ -169,6 +169,9 @@ async def create_appointment(
         await db.rollback()
         raise _conflict_or_reraise(exc)
     await db.refresh(appointment)
+    # Notify the business even though staff entered this one themselves —
+    # bookings are often taken by an employee, not the owner, so the owner
+    # (tenant.email) still wants to know a slot just got filled.
     await notify_appointment(appointment=appointment, tenant=tenant, event="booked")
     return appointment
 

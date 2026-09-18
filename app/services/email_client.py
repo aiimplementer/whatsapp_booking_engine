@@ -1,18 +1,22 @@
-"""Sends appointment booked/cancelled confirmation emails to the *customer*
-(Appointment.customer_email), via one platform-wide Gmail mailbox using
-OAuth2 (not per-tenant SMTP credentials — every tenant's customer emails go
-out from the same `settings.gmail_sender_email` mailbox).
+"""Notifies the *business* (Tenant.email) whenever an appointment is booked
+or cancelled — whether a customer did it themselves (public booking page,
+WhatsApp, Telegram) or the tenant's own staff/admin entered it from the
+dashboard. Staff often take bookings on a customer's behalf (phone calls,
+walk-ins), so the business owner still wants the heads-up either way.
+
+Sent from one platform-wide Gmail mailbox using OAuth2 (not per-tenant SMTP
+credentials — every tenant's notification goes out from the same
+`settings.gmail_sender_email` mailbox, to that tenant's own `tenant.email`).
 
 Deliberately dependency-light: talks to Google's OAuth token endpoint and
 the Gmail API directly over httpx (same pattern as whatsapp_client.py /
 telegram_client.py) instead of pulling in google-api-python-client.
 
-Callers should treat every function here as best-effort: a customer not
-getting a confirmation email is never a reason to fail or roll back a
+Callers should treat every function here as best-effort: the business not
+getting a notification email is never a reason to fail or roll back a
 booking. `notify_appointment` never raises — it logs and returns on any
-failure (missing config, tenant opted out, no customer email, network/API
-error) so call sites can invoke it fire-and-forget, straight after a
-successful commit.
+failure (missing config, tenant opted out, network/API error) so call
+sites can invoke it fire-and-forget, straight after a successful commit.
 """
 
 import base64
@@ -107,20 +111,21 @@ async def send_email(*, to: str, subject: str, html_body: str) -> dict:
 async def notify_appointment(
     *, appointment: Appointment, tenant: Tenant, event: str
 ) -> None:
-    """Fire-and-forget booked/cancelled email to the customer.
+    """Fire-and-forget booked/cancelled email to the business (tenant.email).
 
     `event` is "booked" or "cancelled". Silently does nothing (just an
-    info-level log) when: the platform hasn't configured Gmail, the tenant
-    hasn't turned on email_notifications_enabled, or this particular
-    appointment has no customer_email on file. Any actual send failure is
-    logged at warning level and swallowed — never raised.
+    info-level log) when: the platform hasn't configured Gmail, or the
+    tenant hasn't turned on email_notifications_enabled. Any actual send
+    failure is logged at warning level and swallowed — never raised.
+
+    Called for every booking/cancellation regardless of who made it —
+    customer (public page/WhatsApp/Telegram) or the tenant's own staff from
+    the admin dashboard.
     """
     if not is_configured():
         logger.info("Skipping %s email: Gmail OAuth2 not configured", event)
         return
     if not tenant.email_notifications_enabled:
-        return
-    if not appointment.customer_email:
         return
 
     try:
@@ -129,13 +134,13 @@ async def notify_appointment(
         when = local_time.strftime("%A, %d %B %Y at %I:%M %p")
 
         if event == "booked":
-            subject = f"Booking confirmed — {tenant.name} ({appointment.booking_ref})"
-            heading = "Your appointment is confirmed"
-            intro = "Thanks for booking with us — here are your appointment details:"
+            subject = f"New appointment booked — {appointment.customer_name} ({appointment.booking_ref})"
+            heading = "New appointment scheduled"
+            intro = "A customer has just booked an appointment with you:"
         elif event == "cancelled":
-            subject = f"Booking cancelled — {tenant.name} ({appointment.booking_ref})"
-            heading = "Your appointment has been cancelled"
-            intro = "This is to confirm that the following appointment has been cancelled:"
+            subject = f"Appointment cancelled — {appointment.customer_name} ({appointment.booking_ref})"
+            heading = "Appointment cancelled"
+            intro = "A customer has just cancelled their appointment with you:"
         else:
             logger.warning("notify_appointment called with unknown event %r", event)
             return
@@ -143,12 +148,13 @@ async def notify_appointment(
         html_body = _render_email(
             heading=heading,
             intro=intro,
-            tenant_name=tenant.name,
             customer_name=appointment.customer_name,
+            customer_phone=appointment.customer_phone,
+            customer_email=appointment.customer_email,
             when=when,
             booking_ref=appointment.booking_ref,
         )
-        await send_email(to=appointment.customer_email, subject=subject, html_body=html_body)
+        await send_email(to=tenant.email, subject=subject, html_body=html_body)
     except Exception:
         # Never let an email failure surface to the booking flow — the
         # appointment itself is already committed by the time this runs.
@@ -159,31 +165,38 @@ async def notify_appointment(
 
 
 def _render_email(
-    *, heading: str, intro: str, tenant_name: str, customer_name: str, when: str, booking_ref: str
+    *,
+    heading: str,
+    intro: str,
+    customer_name: str,
+    customer_phone: str,
+    customer_email: str | None,
+    when: str,
+    booking_ref: str,
 ) -> str:
+    rows = [
+        ("Customer", customer_name),
+        ("Phone", customer_phone),
+    ]
+    if customer_email:
+        rows.append(("Email", customer_email))
+    rows += [
+        ("Date &amp; time", when),
+        ("Reference", booking_ref),
+    ]
+    rows_html = "".join(
+        f'<tr><td style="padding: 6px 0; color: #666;">{label}</td>'
+        f'<td style="padding: 6px 0; font-weight: 600; text-align: right;">{value}</td></tr>'
+        for label, value in rows
+    )
     return f"""\
 <div style="font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #1a1a1a;">
   <h2 style="margin-bottom: 4px;">{heading}</h2>
   <p style="color: #444;">{intro}</p>
   <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
-    <tr>
-      <td style="padding: 6px 0; color: #666;">Business</td>
-      <td style="padding: 6px 0; font-weight: 600; text-align: right;">{tenant_name}</td>
-    </tr>
-    <tr>
-      <td style="padding: 6px 0; color: #666;">Name</td>
-      <td style="padding: 6px 0; font-weight: 600; text-align: right;">{customer_name}</td>
-    </tr>
-    <tr>
-      <td style="padding: 6px 0; color: #666;">Date &amp; time</td>
-      <td style="padding: 6px 0; font-weight: 600; text-align: right;">{when}</td>
-    </tr>
-    <tr>
-      <td style="padding: 6px 0; color: #666;">Reference</td>
-      <td style="padding: 6px 0; font-weight: 600; text-align: right;">{booking_ref}</td>
-    </tr>
+    {rows_html}
   </table>
-  <p style="color: #888; font-size: 12px;">This is an automated notification — please don't reply to this email.</p>
+  <p style="color: #888; font-size: 12px;">This is an automated notification from your ScheduleMate admin dashboard — please don't reply to this email.</p>
 </div>
 """
 

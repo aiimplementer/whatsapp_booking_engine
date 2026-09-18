@@ -52,6 +52,7 @@ from app.models.scheduling import SchedulingConfig, Service
 from app.models.tenant import Tenant
 from app.models.whatsapp_session import WhatsAppSession
 from app.services.business_hours import format_working_hours_text
+from app.services.email_client import notify_appointment
 from app.services.slots import compute_available_slots
 
 # WhatsApp interactive lists cap out at 10 total rows across all sections.
@@ -476,6 +477,13 @@ async def _cancel_booking(
     _reset(session)
     tz = ZoneInfo(tenant.timezone)
     local_time = appointment.scheduled_at.astimezone(tz)
+    # The caller (routers/whatsapp.py or routers/telegram.py) commits this
+    # session right after handle_incoming_message returns, so this fires
+    # just ahead of that commit rather than strictly after it — acceptable
+    # here since the write above has nothing left to fail on. Customer-
+    # initiated cancellation, so (unlike the admin router) the business
+    # does want to hear about it.
+    await notify_appointment(appointment=appointment, tenant=tenant, event="cancelled")
     return [
         f"This is to confirm that booking *{appointment.booking_ref}*, originally "
         f"scheduled for {local_time.strftime('%a, %d %b at %I:%M %p')}, has been cancelled.\n\n"
@@ -855,4 +863,8 @@ async def _finalize_booking(
         f"Reply *menu* for anything else."
     )
     _reset(session)
+    # Customer-initiated booking (via WhatsApp/Telegram), so the business
+    # wants to hear about it — see the note in _cancel_booking above about
+    # this firing just ahead of the caller's commit.
+    await notify_appointment(appointment=appointment, tenant=tenant, event="booked")
     return [confirmation]
