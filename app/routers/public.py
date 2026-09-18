@@ -17,6 +17,7 @@ from app.schemas.public import (
     PublicTenantOut,
 )
 from app.services.business_hours import working_hours_by_day
+from app.services.email_client import notify_appointment
 from app.services.slots import compute_available_slots
 
 router = APIRouter(prefix="/api/v1/public/{tenant_slug}", tags=["public-booking"])
@@ -169,6 +170,7 @@ async def create_booking(
             status.HTTP_409_CONFLICT, detail="Could not create booking"
         ) from exc
     await db.refresh(appointment)
+    await notify_appointment(appointment=appointment, tenant=tenant, event="booked")
     return appointment
 
 
@@ -199,6 +201,7 @@ async def cancel_booking(
     appointment.status = "CANCELLED"
     await db.commit()
     await db.refresh(appointment)
+    await notify_appointment(appointment=appointment, tenant=tenant, event="cancelled")
     return appointment
 
 

@@ -9,6 +9,7 @@ const setEls = {
   timezone: document.getElementById('s-timezone'),
   whatsapp: document.getElementById('s-whatsapp'),
   webBooking: document.getElementById('s-web-booking'),
+  emailNotifications: document.getElementById('s-email-notifications'),
   cancellationPolicy: document.getElementById('s-cancellation-policy'),
   offers: document.getElementById('s-offers'),
   announcements: document.getElementById('s-announcements'),
@@ -26,6 +27,7 @@ async function loadTenant() {
     populateTimezoneSelect(setEls.timezone, tenant.timezone);
     setEls.whatsapp.value = tenant.whatsapp_number || '';
     setEls.webBooking.checked = tenant.web_booking_enabled;
+    setEls.emailNotifications.checked = tenant.email_notifications_enabled;
     setEls.cancellationPolicy.value = tenant.cancellation_policy || '';
     setEls.offers.value = tenant.offers || '';
     setEls.announcements.value = tenant.announcements || '';
@@ -47,6 +49,7 @@ setEls.form.addEventListener('submit', async (e) => {
     timezone: setEls.timezone.value.trim(),
     whatsapp_number: setEls.whatsapp.value.trim() || null,
     web_booking_enabled: setEls.webBooking.checked,
+    email_notifications_enabled: setEls.emailNotifications.checked,
     cancellation_policy: setEls.cancellationPolicy.value.trim() || null,
     offers: setEls.offers.value.trim() || null,
     announcements: setEls.announcements.value.trim() || null,

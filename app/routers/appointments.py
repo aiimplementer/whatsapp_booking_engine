@@ -18,6 +18,7 @@ from app.schemas.appointment import (
     AppointmentOut,
     AppointmentUpdate,
 )
+from app.services.email_client import notify_appointment
 from app.services.slots import validate_business_hours
 
 router = APIRouter(prefix="/api/v1/appointments", tags=["appointments"])
@@ -168,6 +169,7 @@ async def create_appointment(
         await db.rollback()
         raise _conflict_or_reraise(exc)
     await db.refresh(appointment)
+    await notify_appointment(appointment=appointment, tenant=tenant, event="booked")
     return appointment
 
 
@@ -210,6 +212,8 @@ async def update_appointment(
         if reason is not None:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=reason)
 
+    became_cancelled = updates.get("status") == "CANCELLED" and appointment.status != "CANCELLED"
+
     for field, value in updates.items():
         setattr(appointment, field, value)
 
@@ -219,6 +223,9 @@ async def update_appointment(
         await db.rollback()
         raise _conflict_or_reraise(exc)
     await db.refresh(appointment)
+    if became_cancelled:
+        tenant = await db.get(Tenant, user.tenant_id)
+        await notify_appointment(appointment=appointment, tenant=tenant, event="cancelled")
     return appointment
 
 
@@ -239,6 +246,8 @@ async def cancel_appointment(
     appointment.status = "CANCELLED"
     await db.commit()
     await db.refresh(appointment)
+    tenant = await db.get(Tenant, user.tenant_id)
+    await notify_appointment(appointment=appointment, tenant=tenant, event="cancelled")
     return appointment
 
 

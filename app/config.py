@@ -50,5 +50,29 @@ class Settings(BaseSettings):
     # the admin (or the tenant) must call Telegram's setWebhook manually.
     public_base_url: str = ""
 
+    # --- Gmail OAuth2 (appointment booked/cancelled emails) ---
+    # A single Google Workspace/Gmail account sends on behalf of the whole
+    # platform (not per-tenant) — the "From" a customer sees is this one
+    # mailbox. OAuth2 client credentials + a long-lived refresh token, from
+    # the OAuth consent screen you already set up in Google Cloud Console:
+    #   1. Cloud Console > APIs & Services > Credentials > OAuth client ID
+    #      (type: Web application) -> gives you client_id/client_secret.
+    #   2. Run the OAuth consent flow once with scope
+    #      https://www.googleapis.com/auth/gmail.send and
+    #      access_type=offline, prompt=consent, to obtain a refresh_token
+    #      (e.g. via Google's OAuth Playground: https://developers.google.com/oauthplayground,
+    #      using your own client_id/client_secret under its gear icon).
+    #   3. Paste all three below (as Render env vars in prod).
+    # Leave gmail_refresh_token blank to disable email sending entirely —
+    # every call site treats that as "not configured" and skips silently.
+    gmail_client_id: str = ""
+    gmail_client_secret: str = ""
+    gmail_refresh_token: str = ""
+    # The mailbox the refresh token belongs to — also used as the visible
+    # "From" address (Gmail's API always sends as the authenticated user
+    # regardless of any From header, so this is what customers will see).
+    gmail_sender_email: str = ""
+    gmail_sender_name: str = "ScheduleMate"
+
 
 settings = Settings()

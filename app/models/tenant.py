@@ -63,6 +63,14 @@ class Tenant(UUIDPKMixin, TimestampMixin, Base):
     # set, it becomes the page's opening tab so a first-time visitor gets
     # context before being asked to pick a service.
     about: Mapped[str | None] = mapped_column(Text)
+    # Per-tenant on/off switch for the booked/cancelled confirmation emails
+    # sent to the *customer's* email address (Appointment.customer_email).
+    # Defaults off: a tenant that hasn't opted in shouldn't suddenly start
+    # emailing its customers because the platform account configured Gmail
+    # OAuth2 credentials. Sending itself is also gated on
+    # settings.gmail_refresh_token being configured at all — this column
+    # only controls whether *this tenant* wants it once that's true.
+    email_notifications_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     branding: Mapped[dict] = mapped_column(JSONB, default=dict)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 

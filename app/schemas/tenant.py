@@ -20,6 +20,7 @@ class TenantOut(BaseModel):
     offers: str | None
     announcements: str | None
     about: str | None
+    email_notifications_enabled: bool
     branding: dict
     created_at: datetime
 
@@ -44,6 +45,7 @@ class TenantUpdate(BaseModel):
     offers: str | None = Field(default=None, max_length=4000)
     announcements: str | None = Field(default=None, max_length=4000)
     about: str | None = Field(default=None, max_length=4000)
+    email_notifications_enabled: bool | None = None
     branding: dict | None = None
 
     @field_validator("timezone")
