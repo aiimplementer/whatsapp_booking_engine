@@ -14,6 +14,8 @@ const setEls = {
   offers: document.getElementById('s-offers'),
   announcements: document.getElementById('s-announcements'),
   about: document.getElementById('s-about'),
+  sendTestEmailBtn: document.getElementById('s-send-test-email'),
+  testEmailResult: document.getElementById('s-test-email-result'),
 };
 
 async function loadTenant() {
@@ -69,3 +71,19 @@ setEls.form.addEventListener('submit', async (e) => {
 });
 
 loadTenant();
+
+setEls.sendTestEmailBtn.addEventListener('click', async () => {
+  setEls.testEmailResult.style.color = '';
+  setEls.testEmailResult.textContent = 'Sending…';
+  setEls.sendTestEmailBtn.disabled = true;
+  try {
+    const result = await Api.post('/api/v1/tenants/me/test-email');
+    setEls.testEmailResult.style.color = 'var(--green, #22863a)';
+    setEls.testEmailResult.textContent = `Sent to ${result.sent_to} — check your inbox (and spam folder).`;
+  } catch (err) {
+    setEls.testEmailResult.style.color = 'var(--red, #cb2431)';
+    setEls.testEmailResult.textContent = err.detail || err.message;
+  } finally {
+    setEls.sendTestEmailBtn.disabled = false;
+  }
+});

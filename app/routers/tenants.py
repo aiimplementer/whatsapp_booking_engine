@@ -15,6 +15,7 @@ from app.schemas.tenant import (
     TenantUserRoleUpdate,
 )
 from app.security import hash_password
+from app.services.email_client import EmailSendError, is_configured, send_email
 
 router = APIRouter(prefix="/api/v1/tenants", tags=["tenants"])
 
@@ -40,6 +41,44 @@ async def update_my_tenant(
     await db.commit()
     await db.refresh(tenant)
     return tenant
+
+
+@router.post("/me/test-email", status_code=status.HTTP_200_OK)
+async def send_test_email(
+    user: TenantUser = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_tenant_db),
+):
+    """Sends a real test email to the tenant's own address (tenant.email)
+    right now, bypassing the email_notifications_enabled toggle, and
+    surfaces the actual Gmail error instead of the silent best-effort
+    behaviour notify_appointment uses for real bookings. Exists purely so
+    an admin troubleshooting "I never got an email" has one call that
+    tells them exactly what's wrong (unset GMAIL_* env vars, an expired/
+    invalid refresh token, wrong sender scope, etc.) instead of having to
+    read server logs.
+    """
+    if not is_configured():
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail=(
+                "Gmail is not configured on the server — GMAIL_CLIENT_ID, "
+                "GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN and GMAIL_SENDER_EMAIL "
+                "must all be set."
+            ),
+        )
+    tenant = await db.get(Tenant, user.tenant_id)
+    try:
+        await send_email(
+            to=tenant.email,
+            subject="ScheduleMate test email",
+            html_body=(
+                "<p>This is a test email from your ScheduleMate admin dashboard. "
+                "If you got this, appointment-notification emails are working.</p>"
+            ),
+        )
+    except EmailSendError as exc:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+    return {"sent_to": tenant.email}
 
 
 @router.get("/me/users", response_model=list[TenantUserOut])
