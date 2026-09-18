@@ -49,12 +49,19 @@ def is_configured() -> bool:
     """Whether the platform has Gmail OAuth2 credentials at all. Tenants
     that opt in but find this false are effectively "coming soon" — the
     admin/ops side (not the tenant) needs to finish setup."""
-    return bool(
-        settings.gmail_client_id
-        and settings.gmail_client_secret
-        and settings.gmail_refresh_token
-        and settings.gmail_sender_email
-    )
+    return not missing_config()
+
+
+def missing_config() -> list[str]:
+    """Names of whichever GMAIL_* env vars are still unset — used to give a
+    specific, actionable error instead of a blanket "not configured"."""
+    required = {
+        "GMAIL_CLIENT_ID": settings.gmail_client_id,
+        "GMAIL_CLIENT_SECRET": settings.gmail_client_secret,
+        "GMAIL_REFRESH_TOKEN": settings.gmail_refresh_token,
+        "GMAIL_SENDER_EMAIL": settings.gmail_sender_email,
+    }
+    return [name for name, value in required.items() if not value]
 
 
 async def _get_access_token() -> str:

@@ -15,7 +15,7 @@ from app.schemas.tenant import (
     TenantUserRoleUpdate,
 )
 from app.security import hash_password
-from app.services.email_client import EmailSendError, is_configured, send_email
+from app.services.email_client import EmailSendError, is_configured, missing_config, send_email
 
 router = APIRouter(prefix="/api/v1/tenants", tags=["tenants"])
 
@@ -61,9 +61,8 @@ async def send_test_email(
         raise HTTPException(
             status.HTTP_409_CONFLICT,
             detail=(
-                "Gmail is not configured on the server — GMAIL_CLIENT_ID, "
-                "GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN and GMAIL_SENDER_EMAIL "
-                "must all be set."
+                "Gmail is not configured on the server — missing: "
+                + ", ".join(missing_config())
             ),
         )
     tenant = await db.get(Tenant, user.tenant_id)
